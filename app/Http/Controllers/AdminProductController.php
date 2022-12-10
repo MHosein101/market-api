@@ -96,11 +96,11 @@ class AdminProductController extends Controller
 
         $uniqueIgnore = $isCreate ? '' : ",$productId,id";
 
-        $v = DataHelper::validate( response() , $request->all() , 
+        $v = DataHelper::validate( response() , $request->post() , 
         [
             'title'       => [ 'عنوان محصول', 'required|filled|unique:products,title' . $uniqueIgnore ] ,
             'barcode'     => [ 'بارکد', 'required|filled|numeric' ] ,
-            'description' => [ 'توضیحات', 'nullable' ] ,
+            'description' => [ 'توضیحات', 'nullable|max:500' ] ,
             'brand_id'    => [ 'برند', 'required|numeric' ] ,
             'category_id' => [ 'دسته بندی', 'required|numeric' ] ,
         ]);
@@ -123,11 +123,11 @@ class AdminProductController extends Controller
         if( $v['code'] == 400 ) return $v['response'];
 
         $data = [
-            'title' => $request->input('title') , 
-            'slug' => preg_replace('/ +/', '-', $request->input('title')) ,
-            'barcode' => $request->input('barcode') , 
-            'description' => $request->input('description', '') , 
-            'brand_id' => (int)$request->input('brand_id')
+            'title' => $request->post('title') , 
+            'slug' => preg_replace('/ +/', '-', $request->post('title')) ,
+            'barcode' => $request->post('barcode') , 
+            'description' => DataHelper::post('description', '') , 
+            'brand_id' => (int)$request->post('brand_id')
         ];
 
         $product = null;

@@ -8,6 +8,7 @@ use Illuminate\Support\Facades\Hash;
 use Illuminate\Notifications\Notifiable;
 use Illuminate\Database\Eloquent\SoftDeletes;
 use Illuminate\Contracts\Auth\MustVerifyEmail;
+use Illuminate\Database\Eloquent\Casts\Attribute;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 
@@ -59,12 +60,21 @@ class User extends Authenticatable
     protected $appends = [ 'address', 'is_password', 'is_profile_image', 'is_active', 'is_pending' ];
 
     /**
+     * Override profile_image value if it's empty
+     * 
+     * @return string
+     */
+    public function getProfileImageAttribute($value) {
+        return $value != '' ? $value : request()->getSchemeAndHttpHost() . '/default.jpg';
+    }
+
+    /**
      * Compute boolean value from profile_image column value
      * 
      * @return boolean
      */
     public function getIsProfileImageAttribute() {
-        return ! (strpos($this->profile_image, 'default') !== false);
+        return !Str::contains($this->profile_image, 'default.jpg');
     }
 
     /**

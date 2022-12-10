@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use Illuminate\Support\Str;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\SoftDeletes;
 
@@ -41,12 +42,21 @@ class Brand extends Model
     protected $appends = [ 'is_brand_image', 'is_show' ];
 
     /**
+     * Override logo_url value if it's empty
+     * 
+     * @return string
+     */
+    public function getLogoUrlAttribute($value) {
+        return $value != '' ? $value : request()->getSchemeAndHttpHost() . '/default.jpg';
+    }
+
+    /**
      * Compute boolean value from logo_url column value
      * 
      * @return boolean
      */
     public function getIsBrandImageAttribute() {
-        return ! (strpos($this->logo_url, 'default') !== false);
+        return !Str::contains($this->logo_url, 'default.jpg');
     }
 
     /**

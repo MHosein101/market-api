@@ -101,16 +101,16 @@ class AdminCategoryController extends Controller
     {
         $isCreate = ($categoryId == null) ? true : false;
 
-        $v = DataHelper::validate( response() , $request->all() , 
+        $v = DataHelper::validate( response() , $request->post() , 
         [
-            'category_name'      => [ 'نام دسته', 'required|filled|between:3,50' ] ,
+            'category_name'      => [ 'نام دسته', 'required|filled|max:50' ] ,
             'category_parent_id' => [ 'شناسه والد', 'nullable|numeric' ] ,
         ]);
         if( $v['code'] == 400 ) return $v['response'];
 
         $data = [
-            'name' => $request->input('category_name') ,
-            'slug' => preg_replace('/ +/', '-', $request->input('category_name')) ,
+            'name' => $request->post('category_name') ,
+            'slug' => preg_replace('/ +/', '-', $request->post('category_name')) ,
         ];
 
         $isUnique = DataHelper::checkUnique(Category::class, $data['name'], $categoryId);
@@ -119,7 +119,7 @@ class AdminCategoryController extends Controller
 
         if($isUnique) {
             if($isCreate) {
-                $parentId = $request->input('category_parent_id', null);
+                $parentId = $request->post('category_parent_id', null);
                 $data['parent_id'] = $parentId != null ? (int)$parentId : null;
                 
                 Category::create($data);
@@ -131,7 +131,8 @@ class AdminCategoryController extends Controller
             }
 
             $msg = $isCreate ? 'دسته بندی با موفقیت ثبت شد' : 'تغییرات با موفقیت ثبت شد';
-            $status = $isCreate ? 201 : 200;
+            // $status = $isCreate ? 201 : 200;
+            $status = 200;
         }
 
         $result = DataHelper::categories($request->query());
@@ -144,7 +145,7 @@ class AdminCategoryController extends Controller
             'count' => $count ,
             'pagination' => $pagination ,
             'categories' => $data ,
-        ], $status);
+        ], 200);
     }
 
     /**

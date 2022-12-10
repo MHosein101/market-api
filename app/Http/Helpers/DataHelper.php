@@ -18,6 +18,20 @@ use Illuminate\Support\Facades\Validator;
 class DataHelper
 {
     /**
+     * Return request field value or default if is null
+     *
+     * @param string $key
+     * @param mixed $default
+     * 
+     * @return array
+     */ 
+    public static function post($key, $default = '')
+    {
+        $value = request()->post($key);
+        return $value == null ? $default : $value;
+    }
+
+    /**
      * Validate request data with rules and return error response if fails
      *
      * @param Response $response
@@ -232,7 +246,7 @@ class DataHelper
      */ 
     public static function dataImage($request, $isCreate, $path, $class, $id, $input, $column) {
         $imageUrl = $isCreate 
-        ? $request->getSchemeAndHttpHost() . '/default.jpg' 
+        ? ''
         : $class::withTrashed()->find($id)->$column;
 
         if($request->file($input) != null) {
@@ -244,9 +258,9 @@ class DataHelper
         $class::withTrashed()->where('id', $id)
         ->update([ $column => $imageUrl ]);
 
-        if ($request->input($input) == '1') {
+        if ($request->post($input) == '1') {
             $class::withTrashed()->where('id', $id)
-            ->update([ $column => $request->getSchemeAndHttpHost() . '/default.jpg' ]);
+            ->update([ $column => '' ]);
         }
     }
 
@@ -301,6 +315,8 @@ class DataHelper
             Storage::put('public/request.log.txt', json_encode([]));
 
         $data = Storage::get('public/request.log.txt');
+        if($data == null) $data = '[]';
+
         return json_decode($data, $output);
     }
 

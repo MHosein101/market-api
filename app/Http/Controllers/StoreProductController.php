@@ -88,7 +88,7 @@ class StoreProductController extends Controller
     {
         $isCreate = ($productId == null) ? true : false;
 
-        $v = DataHelper::validate( response() , $request->all() , 
+        $v = DataHelper::validate( response() , $request->post() , 
         [
             'production_date' => [ 'تاریخ تولید', 'nullable|between:8,10' ] ,
             'expire_date' => [ 'تاریخ انقضا', 'nullable|between:8,10' ] ,
@@ -115,28 +115,28 @@ class StoreProductController extends Controller
         if( $v['code'] == 400 ) return $v['response'];
 
         $data = [
-            'production_date' => $request->input('production_date', '') ,
-            'expire_date' => $request->input('expire_date', '') ,
+            'production_date' => DataHelper::post('production_date', '') ,
+            'expire_date' => DataHelper::post('expire_date', '') ,
             
-            'production_price' => (int)$request->input('production_price', 0) ,
-            'consumer_price' => (int)$request->input('consumer_price') ,
-            'store_price' => (int)$request->input('store_price') ,
+            'production_price' => (int)DataHelper::post('production_price', 0) ,
+            'consumer_price' => (int)$request->post('consumer_price') ,
+            'store_price' => (int)$request->post('store_price') ,
             
-            'store_price_1' => (int)$request->input('store_price_1', 0) ,
-            'store_price_2' => (int)$request->input('store_price_2', 0) ,
+            'store_price_1' => (int)DataHelper::post('store_price_1', 0) ,
+            'store_price_2' => (int)DataHelper::post('store_price_2', 0) ,
             
-            'per_unit' => (int)$request->input('per_unit') ,
-            'warehouse_count' => (int)$request->input('warehouse_count', 0) ,
+            'per_unit' => (int)DataHelper::post('per_unit', 1) ,
+            'warehouse_count' => (int)DataHelper::post('warehouse_count', 0) ,
             
-            'delivery_description' => $request->input('delivery_description', '') ,
-            'store_note' => $request->input('store_note', '') ,
+            'delivery_description' => DataHelper::post('delivery_description', '') ,
+            'store_note' => DataHelper::post('store_note', '') ,
 
-            'cash_payment_discount' => (int)$request->input('cash_payment_discount', 0) ,
-            'commission' => (int)$request->input('commission', 0) ,
+            'cash_payment_discount' => (int)DataHelper::post('cash_payment_discount', 0) ,
+            'commission' => (int)DataHelper::post('commission', 0) ,
             
             'admin_confirmed' => -1 ,
             
-            'product_id' => (int)$request->input('product_id') ,
+            'product_id' => (int)$request->post('product_id') ,
         ];
 
         $product = null;
@@ -167,18 +167,18 @@ class StoreProductController extends Controller
             $product = StoreProduct::withTrashed()->find($productId);
         }
         
-        $discountsCount = (int)$request->input("discounts_count", 0);
+        $discountsCount = (int)$request->post("discounts_count", 0);
         
         if($discountsCount > 0)
             StoreProductDiscount::where('product_id', $productId)->delete();
 
         for($i = 0; $i < $discountsCount; $i++) {
 
-            $dvalue = str_replace(',', '', $request->input("product_discounts_{$i}_discount_value") );
-            $fprice = str_replace(',', '', $request->input("product_discounts_{$i}_final_price") );
+            $dvalue = str_replace(',', '', $request->post("product_discounts_{$i}_discount_value") );
+            $fprice = str_replace(',', '', $request->post("product_discounts_{$i}_final_price") );
 
             StoreProductDiscount::create([
-                'discount_type' => $request->input("product_discounts_{$i}_discount_type") ,
+                'discount_type' => $request->post("product_discounts_{$i}_discount_type") ,
                 'discount_value' => (int)$dvalue ,
                 'final_price' => (int)$fprice ,
                 'product_id' => $productId

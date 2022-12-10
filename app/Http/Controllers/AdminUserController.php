@@ -85,7 +85,7 @@ class AdminUserController extends Controller
         
         $uniqueIgnore = $isCreate ? '' : ",$userId,id";
 
-        $v = DataHelper::validate( response() , $request->all() , 
+        $v = DataHelper::validate( response() , $request->post() , 
         [
             'full_name' => [ 'نام و نام خانوادگی', 'required|filled|between:3,50' ] ,
             'national_code' => [ 'کد ملی', 'required|filled|numeric|digits:10|unique:users,national_code' . $uniqueIgnore ] ,
@@ -126,21 +126,21 @@ class AdminUserController extends Controller
         }
 
         $userData = [
-            'full_name' => $request->input('full_name') ,
-            'national_code' => $request->input('national_code') ,
-            'phone_number_primary' => $request->input('phone_number_primary') ,
-            'phone_number_secondary' => $request->input('phone_number_secondary', '') ,
-            'house_number' => $request->input('house_number', '') ,
+            'full_name' => $request->post('full_name') ,
+            'national_code' => $request->post('national_code') ,
+            'phone_number_primary' => $request->post('phone_number_primary') ,
+            'phone_number_secondary' => DataHelper::post('phone_number_secondary', '') ,
+            'house_number' => DataHelper::post('house_number', '') ,
         ];
 
-        if($request->input('password') != null)
-            $userData['password'] = Hash::make($request->input('password'));
+        if($request->post('password') != null)
+            $userData['password'] = Hash::make($request->post('password'));
 
         $userAddress = [
-            'province' => $request->input('address_province', '') ,
-            'city' => $request->input('address_city', '') ,
-            'detail' => $request->input('address_detail', '') ,
-            'post_code' => $request->input('address_postcode', '') ,
+            'province' => DataHelper::post('address_province', '') ,
+            'city' => DataHelper::post('address_city', '') ,
+            'detail' => DataHelper::post('address_detail', '') ,
+            'post_code' => DataHelper::post('address_postcode', '') ,
         ];
 
         $user = null;

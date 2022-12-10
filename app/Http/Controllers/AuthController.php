@@ -75,7 +75,7 @@ class AuthController extends Controller
      */ 
     public function loginCredentials(Request $request)
     {
-        $v = DataHelper::validate( response() , $request->all() , 
+        $v = DataHelper::validate( response() , $request->post() , 
         [
             'national_code' => [ 'کد ملی', 'required|filled|digits:10' ] ,
             'password' => [ 'رمز عبور', 'required|filled|min:6' ]
@@ -155,7 +155,7 @@ class AuthController extends Controller
      */ 
     public function loginByCode(Request $request)
     {
-        $v = DataHelper::validate( response() , $request->all() , 
+        $v = DataHelper::validate( response() , $request->post() , 
         [
             'phone_number' => [ 'شماره تماس', 'required|filled|digits_between:10,11|starts_with:09,9' ]
         ]);
@@ -215,7 +215,7 @@ class AuthController extends Controller
      */ 
     public function codeVerification(Request $request)
     {
-        $v = DataHelper::validate( response() , $request->all() , 
+        $v = DataHelper::validate( response() , $request->post() , 
         [
             'phone_number' => [ 'شماره تماس', 'required|filled|digits_between:10,11|starts_with:09,9' ] ,
             'verification_code' => [ 'کداعتبارسنجی', 'required|filled|digits:4' ]

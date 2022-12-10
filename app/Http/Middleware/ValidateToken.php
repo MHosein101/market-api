@@ -55,7 +55,9 @@ class ValidateToken
         $request->merge(compact('apiToken'));
         $request->merge(compact('user'));
 
-        DataHelper::logRequest($request);
+        if(!$request->isMethod('get'))
+            DataHelper::logRequest($request);
+        
         return $next($request);
     }
 }

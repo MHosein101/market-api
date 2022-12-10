@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use Illuminate\Support\Str;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\SoftDeletes;
 
@@ -56,7 +57,7 @@ class Store extends Model
      *
      * @var array
      */
-    protected $hidden = [ 'created_at', 'updated_at', 'deleted_at' ];
+    protected $hidden = [ 'admin_confirmed', 'created_at', 'updated_at', 'deleted_at' ];
 
     /**
      * New attributes that should be appended to model
@@ -84,12 +85,39 @@ class Store extends Model
     }
 
     /**
+     * Override logo_image value if it's empty
+     * 
+     * @return string
+     */
+    public function getLogoImageAttribute($value) {
+        return $value != '' ? $value : request()->getSchemeAndHttpHost() . '/default.jpg';
+    }
+
+    /**
+     * Override license_image value if it's empty
+     * 
+     * @return string
+     */
+    public function getLicenseImageAttribute($value) {
+        return $value != '' ? $value : request()->getSchemeAndHttpHost() . '/default.jpg';
+    }
+
+    /**
+     * Override banner_image value if it's empty
+     * 
+     * @return string
+     */
+    public function getBannerImageAttribute($value) {
+        return $value != '' ? $value : request()->getSchemeAndHttpHost() . '/default.jpg';
+    }
+
+    /**
      * Compute boolean value from logo_image column value
      * 
      * @return boolean
      */
     public function getIsLogoImageAttribute() {
-        return ! (strpos($this->logo_image, 'default') !== false);
+        return !Str::contains($this->logo_image, 'default.jpg');
     }
 
     /**
@@ -98,7 +126,7 @@ class Store extends Model
      * @return boolean
      */
     public function getIsLicenseImageAttribute() {
-        return ! (strpos($this->license_image, 'default') !== false);
+        return !Str::contains($this->license_image, 'default.jpg');
     }
 
     /**
@@ -107,7 +135,7 @@ class Store extends Model
      * @return boolean
      */
     public function getIsStoreBannerImageAttribute() {
-        return ! (strpos($this->banner_image, 'default') !== false);
+        return !Str::contains($this->banner_image, 'default.jpg');
     }
     
     /**
@@ -127,6 +155,5 @@ class Store extends Model
     public function getIsPasswordAttribute() {
         return User::find(request()->user->id)->is_password;
     }
-    
 
 }

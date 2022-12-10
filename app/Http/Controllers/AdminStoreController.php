@@ -89,22 +89,24 @@ class AdminStoreController extends Controller
         $isCreate = ($storeId == null) ? true : false;
 
         $uniqueIgnoreStore = $isCreate ? '' : ",$storeId,id";
-        $uniqueIgnoreUser = $isCreate ? '' : ",{$request->user->id},id";
 
-        $v = DataHelper::validate( response() , $request->all() , 
+        $userId = $isCreate ? -1 : User::where('store_id', $storeId)->get()->first()->id;
+        $uniqueIgnoreUser = $isCreate ? '' : ",$userId,id";
+
+        $v = DataHelper::validate( response() , $request->post() , 
         [
-            'name'          => [ 'نام فروشگاه', 'required|filled|between:3,50' ] ,
+            'name'          => [ 'نام فروشگاه', 'required|filled|max:50' ] ,
             'economic_code' => [ 'کد اقتصادی', 'nullable|numeric|unique:stores,economic_code' . $uniqueIgnoreStore ] ,
 
-            'owner_full_name'     => [ 'نام و نام خانوادگی مالک فروشگاه', 'required|filled|between:3,50' ] ,
+            'owner_full_name'     => [ 'نام و نام خانوادگی مالک فروشگاه', 'required|filled|max:50' ] ,
             'owner_phone_number'  => [ 'شماره همراه مالک فروشگاه', 'required|filled|digits_between:10,11|starts_with:09,9|unique:users,phone_number_primary' . $uniqueIgnoreUser ] ,
             'owner_national_code' => [ 'کد ملی مالک فروشگاه', 'required|numeric|digits:10|unique:users,national_code' . $uniqueIgnoreUser ] ,
             'second_phone_number' => [ 'شماره همراه دوم', 'nullable|digits_between:10,11|starts_with:09,9' ] ,
 
             'owner_password' => [ 'رمز عبور', 'nullable|min:6' ] ,
 
-            'province' => [ 'استان', 'nullable|between:2,50' ] ,
-            'city'     => [ 'شهر', 'nullable|between:2,50' ] ,
+            'province' => [ 'استان', 'nullable|max:50' ] ,
+            'city'     => [ 'شهر', 'nullable|max:50' ] ,
 
             'office_address' => [ 'آدرس دفتر مرکزی', 'required|filled' ] ,
             'office_number'  => [ 'شماره تماس دفتر مرکزی', 'required|filled|digits_between:10,13' ] ,
@@ -112,7 +114,7 @@ class AdminStoreController extends Controller
             'warehouse_address' => [ 'آدرس انبار مرکزی', 'nullable' ] ,
             'warehouse_number'  => [ 'شماره تماس آنبار مرکزی', 'nullable|digits_between:10,13' ] ,
 
-            'bank_name'         => [ 'نام بانک', 'nullable|between:3,50' ] ,
+            'bank_name'         => [ 'نام بانک', 'nullable|max:50' ] ,
             'bank_code'         => [ 'کد شعبه بانک', 'nullable|numeric|digits:4' ] ,
             'bank_card_number'  => [ 'شماره کارت', 'nullable|numeric|digits:16' ] ,
             'bank_sheba_number' => [ 'شماره شبای حساب', 'nullable|numeric|digits:24' ] ,
@@ -145,37 +147,37 @@ class AdminStoreController extends Controller
         }
 
         $data = [
-            'name'          => $request->input('name') ,
-            'slug'          => preg_replace('/ +/', '-', $request->input('name')) ,
-            'economic_code' => $request->input('economic_code', '') ,
+            'name'          => $request->post('name') ,
+            'slug'          => preg_replace('/ +/', '-', $request->post('name')) ,
+            'economic_code' => DataHelper::post('economic_code', '') ,
 
-            'owner_full_name'     => $request->input('owner_full_name') ,
-            'owner_phone_number'  => $request->input('owner_phone_number') ,
-            'second_phone_number' => $request->input('second_phone_number', '') ,
+            'owner_full_name'     => $request->post('owner_full_name') ,
+            'owner_phone_number'  => $request->post('owner_phone_number') ,
+            'second_phone_number' => DataHelper::post('second_phone_number', '') ,
 
-            'province' => $request->input('province', '') ,
-            'city'     => $request->input('city', '') ,
+            'province' => DataHelper::post('province', '') ,
+            'city'     => DataHelper::post('city', '') ,
 
-            'office_address' => $request->input('office_address') ,
-            'office_number'  => $request->input('office_number') ,
+            'office_address' => $request->post('office_address') ,
+            'office_number'  => $request->post('office_number') ,
 
-            'warehouse_address' => $request->input('warehouse_address', '') ,
-            'warehouse_number'  => $request->input('warehouse_number', '') ,
+            'warehouse_address' => DataHelper::post('warehouse_address', '') ,
+            'warehouse_number'  => DataHelper::post('warehouse_number', '') ,
 
-            'bank_name'         => $request->input('bank_name', '') ,
-            'bank_code'         => $request->input('bank_code', '') ,
-            'bank_card_number'  => $request->input('bank_card_number', '') ,
-            'bank_sheba_number' => $request->input('bank_sheba_number', '') ,
+            'bank_name'         => DataHelper::post('bank_name', '') ,
+            'bank_code'         => DataHelper::post('bank_code', '') ,
+            'bank_card_number'  => DataHelper::post('bank_card_number', '') ,
+            'bank_sheba_number' => DataHelper::post('bank_sheba_number', '') ,
         ];
 
         $userData = [
-            'full_name' => $request->input('owner_full_name') ,
-            'national_code' => $request->input('owner_national_code') ,
-            'phone_number_primary' => $request->input('owner_phone_number')
+            'full_name' => $request->post('owner_full_name') ,
+            'national_code' => $request->post('owner_national_code') ,
+            'phone_number_primary' => $request->post('owner_phone_number')
         ];
         
-        if($request->input('owner_password') != null)
-            $userData['password'] = Hash::make($request->input('owner_password'));
+        if($request->post('owner_password') != null)
+            $userData['password'] = Hash::make($request->post('owner_password'));
 
         $store = null;
         $user = null;
@@ -236,10 +238,12 @@ class AdminStoreController extends Controller
 
         if($check->deleted_at == null) {
             Store::where('id', $storeId)->delete();
+            User::where('store_id', $storeId)->delete();
             $msg = 'Store soft deleted.';
         }
         else {
             Store::withTrashed()->where('id', $storeId)->restore();
+            User::withTrashed()->where('store_id', $storeId)->restore();
             $msg = 'Store restored.';
         }
 

@@ -105,7 +105,7 @@ class UserController extends Controller
      */ 
     public function changePassword(Request $request)
     {
-        $v = DataHelper::validate( response() , $request->all() , 
+        $v = DataHelper::validate( response() , $request->post() , 
         [
             'old_password' => [ 'رمز عبور قدیمی', 'required|min:6' ] ,
             'new_password' => [ 'رمز عبور جدید', 'required|min:6' ] ,

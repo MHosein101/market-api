@@ -80,11 +80,11 @@ class AdminBrandController extends Controller
     {
         $isCreate = ($brandId == null) ? true : false;
 
-        $v = DataHelper::validate( response() , $request->all() , 
+        $v = DataHelper::validate( response() , $request->post() , 
         [
-            'brand_name'         => [ 'نام برند', 'required|filled' ] ,
-            'brand_english_name' => [ 'نام انگلیسی برند', 'required|filled' ] ,
-            'brand_company'      => [ 'شرکت برند', 'required|filled' ] ,
+            'brand_name'         => [ 'نام برند', 'required|filled|max:50' ] ,
+            'brand_english_name' => [ 'نام انگلیسی برند', 'required|filled|max:50' ] ,
+            'brand_company'      => [ 'شرکت برند', 'required|filled|max:50' ] ,
         ]);
         if( $v['code'] == 400 ) return $v['response'];
 
@@ -95,10 +95,10 @@ class AdminBrandController extends Controller
         if( $v['code'] == 400 ) return $v['response'];
 
         $data = [
-            'name' => $request->input('brand_name') ,
-            'english_name' => $request->input('brand_english_name') ,
-            'slug' => preg_replace('/ +/', '-', $request->input('brand_name')) ,
-            'company' => $request->input('brand_company') ,
+            'name' => $request->post('brand_name') ,
+            'english_name' => $request->post('brand_english_name') ,
+            'slug' => preg_replace('/ +/', '-', $request->post('brand_name')) ,
+            'company' => $request->post('brand_company') ,
         ];
 
         $isUnique = DataHelper::checkUnique(Brand::class, $data['name'], $brandId);
@@ -121,7 +121,8 @@ class AdminBrandController extends Controller
             DataHelper::dataImage($request, $isCreate, 'brands', Brand::class, $brandId, 'brand_logo', 'logo_url');
 
             $msg = $isCreate ? 'برند با موفقیت ثبت شد' : 'تغییرات با موفقیت ثبت شد';
-            $status = $isCreate ? 201 : 200;
+            // $status = $isCreate ? 201 : 200;
+            $status = 200;
         }
 
         $result = SearchHelper::dataWithFilters(
@@ -143,7 +144,7 @@ class AdminBrandController extends Controller
             'count' => $count ,
             'pagination' => $pagination ,
             'brands' => $data ,
-        ], $status);
+        ], 200);
     }
 
     /**
