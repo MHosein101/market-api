@@ -56,7 +56,7 @@ class StoreProduct extends Model
      *
      * @var array
      */
-    protected $hidden = [ 'product_id', 'store_id', 'created_at', 'updated_at', 'deleted_at' ];
+    protected $hidden = [ 'admin_confirmed', 'product_id', 'store_id', 'created_at', 'updated_at', 'deleted_at' ];
 
     /**
      * New attributes that should be appended to model

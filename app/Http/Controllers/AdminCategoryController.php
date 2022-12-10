@@ -90,6 +90,7 @@ class AdminCategoryController extends Controller
      * 
      * @see DataHelper::validate(Response, array) : array
      * @see DataHelper::categories(array) : Model[]
+     * @see DataHelper::categories(array) : boolean
      * 
      * @param Request $request
      * @param int|null  $categoryId
@@ -100,11 +101,9 @@ class AdminCategoryController extends Controller
     {
         $isCreate = ($categoryId == null) ? true : false;
 
-        $checkUnique = $isCreate ? '|unique:categories,name' : '';
-
         $v = DataHelper::validate( response() , $request->all() , 
         [
-            'category_name'      => [ 'نام دسته', 'required|filled|between:3,50' . $checkUnique ] ,
+            'category_name'      => [ 'نام دسته', 'required|filled|between:3,50' ] ,
             'category_parent_id' => [ 'شناسه والد', 'nullable|numeric' ] ,
         ]);
         if( $v['code'] == 400 ) return $v['response'];
@@ -114,29 +113,38 @@ class AdminCategoryController extends Controller
             'slug' => preg_replace('/ +/', '-', $request->input('category_name')) ,
         ];
 
-        if($isCreate) {
-            $parentId = $request->input('category_parent_id', null);
-            $data['parent_id'] = $parentId != null ? (int)$parentId : null;
-            
-            Category::create($data);
-        }
-        else {
-            Category::withTrashed()
-            ->where('id', $categoryId)
-            ->update($data);
+        $isUnique = DataHelper::checkUnique(Category::class, $data['name'], $categoryId);
+        $msg = 'نام دسته بندی نمیتواند تکراری باشد';
+        $status = 200;
+
+        if($isUnique) {
+            if($isCreate) {
+                $parentId = $request->input('category_parent_id', null);
+                $data['parent_id'] = $parentId != null ? (int)$parentId : null;
+                
+                Category::create($data);
+            }
+            else {
+                Category::withTrashed()
+                ->where('id', $categoryId)
+                ->update($data);
+            }
+
+            $msg = $isCreate ? 'دسته بندی با موفقیت ثبت شد' : 'تغییرات با موفقیت ثبت شد';
+            $status = $isCreate ? 201 : 200;
         }
 
         $result = DataHelper::categories($request->query());
         extract($result);
 
-        $status = $isCreate ? 201 : 200;
         return response()
         ->json([ 
+            'type' => 'success' ,
             'status' => $status ,
-            'message' =>  $isCreate ? 'Category created.' : 'Category updated.' ,
+            'message' => $msg ,
             'count' => $count ,
             'pagination' => $pagination ,
-            'categories' => $data
+            'categories' => $data ,
         ], $status);
     }
 

@@ -37,7 +37,7 @@ class UserController extends Controller
     public function adminDataCount(Request $request)
     {
         $brands = Brand::withTrashed()->selectRaw('id')->get();
-        $categories = Category::withTrashed()->selectRaw('id')->where('parent_id', null)->get();
+        $categories = Category::withTrashed()->selectRaw('id')->get();
         $products = Product::withTrashed()->selectRaw('id')->get();
         $stores = Store::withTrashed()->selectRaw('id')->get();
         $users = User::withTrashed()->selectRaw('id')->where('account_type', UserAccountType::Normal)->get();
@@ -126,7 +126,9 @@ class UserController extends Controller
             else
                 $checkPassword = $request->input($key) == $user->phone_number_primary;
 
-            if(!$checkPassword) {
+            $checkPassword = $key == 'new_password' ? $checkPassword : !$checkPassword;
+
+            if($checkPassword) {
                 return response()
                 ->json([ 
                     'status' => 400 ,

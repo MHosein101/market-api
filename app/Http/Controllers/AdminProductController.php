@@ -94,11 +94,11 @@ class AdminProductController extends Controller
     {
         $isCreate = ($productId == null) ? true : false;
 
-        $checkUnique = $isCreate ? '|unique:products,title' : '';
+        $uniqueIgnore = $isCreate ? '' : ",$productId,id";
 
         $v = DataHelper::validate( response() , $request->all() , 
         [
-            'title'       => [ 'عنوان محصول', 'required|filled' . $checkUnique ] ,
+            'title'       => [ 'عنوان محصول', 'required|filled|unique:products,title' . $uniqueIgnore ] ,
             'barcode'     => [ 'بارکد', 'required|filled|numeric' ] ,
             'description' => [ 'توضیحات', 'nullable' ] ,
             'brand_id'    => [ 'برند', 'required|numeric' ] ,

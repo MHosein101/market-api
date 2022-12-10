@@ -246,22 +246,6 @@ class SearchHelper
     }
     
     /**
-     * Add store's products filters to query builder
-     *
-     * @param QueryBuilder $qbuilder
-     * @param array $query
-     * 
-     * @return QueryBuilder
-     */ 
-    public static function filterStoreProducts($qbuilder, $query) 
-    {
-        
-
-        return $qbuilder;
-    }
-
-    
-    /**
      * Return items that user marked as favorite or in it's history
      *
      * @param int $userId

@@ -90,14 +90,10 @@ class DataHelper
 
         switch( $queryParams['state'] ) {
             case 'all': 
-                $qbuilder = $qbuilder->withTrashed()
-                    ->where('parent_id', null)
-                    ->orWhere('parent_id', '<', 1);
+                $qbuilder = $qbuilder->withTrashed()->where('parent_id', null);
                 break;
             case 'active': 
-                $qbuilder = $qbuilder
-                    ->where('parent_id', null)
-                    ->orWhere('parent_id', '<', 1);
+                $qbuilder = $qbuilder->where('parent_id', null);
                 break;
             case 'trashed': 
                 $qbuilder = $qbuilder->onlyTrashed()
@@ -143,18 +139,14 @@ class DataHelper
         $category = null;
         $subsIDs = [];
 
+        $category = Category::withTrashed()->find($categoryId);
+
         switch($state) {
-            case 'all': 
-                $category = Category::withTrashed()->find($categoryId);
-                $subsIDs = Category::withTrashed()->where('parent_id', $categoryId)->get();
+            case 'all': $subsIDs = Category::withTrashed()->where('parent_id', $categoryId)->get();
                 break;
-            case 'active': 
-                $category = Category::find($categoryId);
-                $subsIDs = Category::where('parent_id', $categoryId)->get();
+            case 'active': $subsIDs = Category::where('parent_id', $categoryId)->get();
                 break;
-            case 'trashed': 
-                $category = Category::onlyTrashed()->find($categoryId);
-                $subsIDs = Category::onlyTrashed()->where('parent_id', $categoryId)->get();
+            case 'trashed': $subsIDs = Category::onlyTrashed()->where('parent_id', $categoryId)->get();
                 break;
         }
 
@@ -258,6 +250,23 @@ class DataHelper
         }
     }
 
+    /**
+     * Check value is unique in name column of brands and categories in create and update
+     * 
+     * @param Model $class
+     * @param string $value
+     * @param int|null $id
+     * 
+     * @return boolean
+     */ 
+    public static function checkUnique($class, $value, $id = null) {
+        $check = $class::where('name', $value);
+
+        if($id != null)
+            $check = $check->where('id', '!=', $id);
+
+        return $check->get()->first() == null;
+    }
 
     /**
      * Log the request into files
@@ -281,6 +290,9 @@ class DataHelper
 
     /**
      * Show request log content
+     * 
+     * @param string|null $action
+     * @param boolean $output
      * 
      * @return array
      */ 

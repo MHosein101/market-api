@@ -14,9 +14,6 @@ yarn-error.log
 /.idea
 /.vscode
 package.json
-composer.json
-composer.lock
-liara.json
 .editorconfig
 .styleci.yml
 webpack.mix.js

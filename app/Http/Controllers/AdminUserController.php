@@ -82,15 +82,14 @@ class AdminUserController extends Controller
     public function createOrUpdateUser(Request $request, $userId = null, $signUp = false)
     {
         $isCreate = ($userId == null) ? true : false;
-
-        $checkUniqueNC = $isCreate ? '|unique:users,national_code' : '';
-        $checkUniquePN = $isCreate ? '|unique:users,phone_number_primary' : '';
+        
+        $uniqueIgnore = $isCreate ? '' : ",$userId,id";
 
         $v = DataHelper::validate( response() , $request->all() , 
         [
             'full_name' => [ 'نام و نام خانوادگی', 'required|filled|between:3,50' ] ,
-            'national_code' => [ 'کد ملی', 'required|filled|numeric|digits:10' . $checkUniqueNC ] ,
-            'phone_number_primary' => [ 'شماره موبایل اول', 'required|digits_between:10,11|starts_with:09,9' . $checkUniquePN ] ,
+            'national_code' => [ 'کد ملی', 'required|filled|numeric|digits:10|unique:users,national_code' . $uniqueIgnore ] ,
+            'phone_number_primary' => [ 'شماره موبایل اول', 'required|digits_between:10,11|starts_with:09,9|unique:users,phone_number_primary' . $uniqueIgnore ] ,
             'phone_number_secondary' => [ 'شماره موبایل دوم', 'nullable|digits_between:10,11|starts_with:09,9' ] ,
             'house_number' => [ 'تلفن ثابت', 'nullable|digits_between:10,13' ] ,
 

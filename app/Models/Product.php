@@ -73,7 +73,7 @@ class Product extends Model
         foreach($catIDs as $c) {
             $category = Category::withTrashed()->find($c->category_id);
 
-            $names[] =[
+            $names[] = [
                 'id' => $category->id ,
                 'name' => $category->name
             ];
@@ -132,7 +132,7 @@ class Product extends Model
     public function getIsCreatedAttribute() {
         if(request()->user->account_type == UserAccountType::Store) {
             $check = StoreProduct::withTrashed()
-                                 ->where('store_id', request()->user->store_idid)
+                                 ->where('store_id', request()->user->store_id)
                                  ->where('product_id', $this->id)
                                  ->get()->first();
             

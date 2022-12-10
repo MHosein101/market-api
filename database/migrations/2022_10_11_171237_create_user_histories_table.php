@@ -19,6 +19,7 @@ class CreateUserHistoriesTable extends Migration
             $table->unsignedBigInteger('user_id');
             $table->unsignedBigInteger('product_id');
             
+            $table->timestamps();
             $table->softDeletes();
         });
     }

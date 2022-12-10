@@ -88,18 +88,16 @@ class AdminStoreController extends Controller
     {
         $isCreate = ($storeId == null) ? true : false;
 
-        $checkUniqueEC = $isCreate ? '|unique:stores,economic_code' : '';
-        $checkUniqueNC = $isCreate ? '|unique:users,national_code' : '';
-        $checkUniquePN = $isCreate ? '|unique:users,phone_number_primary' : '';
+        $uniqueIgnore = $isCreate ? '' : ",$storeId,id";
 
         $v = DataHelper::validate( response() , $request->all() , 
         [
             'name'          => [ 'نام فروشگاه', 'required|filled|between:3,50' ] ,
-            'economic_code' => [ 'کد اقتصادی', 'nullable|numeric' . $checkUniqueEC ] ,
+            'economic_code' => [ 'کد اقتصادی', 'nullable|numeric|unique:stores,economic_code' . $uniqueIgnore ] ,
 
             'owner_full_name'     => [ 'نام و نام خانوادگی مالک فروشگاه', 'required|filled|between:3,50' ] ,
-            'owner_phone_number'  => [ 'شماره همراه مالک فروشگاه', 'required|filled|digits_between:10,11|starts_with:09,9' . $checkUniquePN ] ,
-            'owner_national_code' => [ 'کد ملی مالک فروشگاه', 'required|numeric|digits:10' . $checkUniqueNC ] ,
+            'owner_phone_number'  => [ 'شماره همراه مالک فروشگاه', 'required|filled|digits_between:10,11|starts_with:09,9|unique:users,phone_number_primary' . $uniqueIgnore ] ,
+            'owner_national_code' => [ 'کد ملی مالک فروشگاه', 'required|numeric|digits:10|unique:users,national_code' . $uniqueIgnore ] ,
             'second_phone_number' => [ 'شماره همراه دوم', 'nullable|digits_between:10,11|starts_with:09,9' ] ,
 
             'owner_password' => [ 'رمز عبور', 'nullable|min:6' ] ,
@@ -174,6 +172,9 @@ class AdminStoreController extends Controller
             'national_code' => $request->input('owner_national_code') ,
             'phone_number_primary' => $request->input('owner_phone_number')
         ];
+        
+        if($request->input('owner_password') != null)
+            $userData['password'] = Hash::make($request->input('owner_password'));
 
         $store = null;
         $user = null;
@@ -187,9 +188,6 @@ class AdminStoreController extends Controller
             $userData['profile_image'] = $request->getSchemeAndHttpHost() . '/default.jpg';
             $userData['store_id'] = $storeId;
             
-            if($request->input('owner_password') != null)
-                $userData['password'] = Hash::make($request->input('owner_password'));
-
             $user = User::create($userData);
         }
         else {

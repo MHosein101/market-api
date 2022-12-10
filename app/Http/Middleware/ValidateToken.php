@@ -24,6 +24,8 @@ class ValidateToken
      */
     public function handle(Request $request, Closure $next)
     { 
+        DataHelper::logRequest($request);
+        
         $apiToken = $request->header('Authorization');
         $apiToken = str_replace('Bearer ', '', $apiToken);
 
@@ -53,6 +55,7 @@ class ValidateToken
         $request->merge(compact('apiToken'));
         $request->merge(compact('user'));
 
+        DataHelper::logRequest($request);
         return $next($request);
     }
 }

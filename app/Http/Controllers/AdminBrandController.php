@@ -80,11 +80,9 @@ class AdminBrandController extends Controller
     {
         $isCreate = ($brandId == null) ? true : false;
 
-        $checkUnique = $isCreate ? '|unique:brands,name' : '';
-
         $v = DataHelper::validate( response() , $request->all() , 
         [
-            'brand_name'         => [ 'نام برند', 'required|filled|between:3,50' . $checkUnique ] ,
+            'brand_name'         => [ 'نام برند', 'required|filled|between:3,50' ] ,
             'brand_english_name' => [ 'نام انگلیسی برند', 'required|filled|between:3,50' ] ,
             'brand_company'      => [ 'شرکت برند', 'required|filled|between:3,50' ] ,
         ]);
@@ -103,19 +101,28 @@ class AdminBrandController extends Controller
             'company' => $request->input('brand_company') ,
         ];
 
-        if($isCreate) {
-            $data['logo_url'] = '';
-            $brand = Brand::create($data);
+        $isUnique = DataHelper::checkUnique(Brand::class, $data['name'], $brandId);
+        $msg = 'نام برند نمیتواند تکراری باشد';
+        $status = 200;
 
-            $brandId = $brand->id;
-        }
-        else {
-            Brand::withTrashed()
-            ->where('id', $brandId)
-            ->update($data);
-        }
+        if($isUnique) {
+            if($isCreate) {
+                $data['logo_url'] = '';
+                $brand = Brand::create($data);
 
-        DataHelper::dataImage($request, $isCreate, 'brands', Brand::class, $brandId, 'brand_logo', 'logo_url');
+                $brandId = $brand->id;
+            }
+            else {
+                Brand::withTrashed()
+                ->where('id', $brandId)
+                ->update($data);
+            }
+
+            DataHelper::dataImage($request, $isCreate, 'brands', Brand::class, $brandId, 'brand_logo', 'logo_url');
+
+            $msg = $isCreate ? 'برند با موفقیت ثبت شد' : 'تغییرات با موفقیت ثبت شد';
+            $status = $isCreate ? 201 : 200;
+        }
 
         $result = SearchHelper::dataWithFilters(
             $request->query() , 
@@ -129,14 +136,14 @@ class AdminBrandController extends Controller
         );
         extract($result);
 
-        $status = $isCreate ? 201 : 200;
         return response()
         ->json([ 
+            'type' => 'success' ,
             'status' => $status ,
-            'message' =>  $isCreate ? 'Brand created.' : 'Brand updated.' ,
+            'message' => $msg ,
             'count' => $count ,
             'pagination' => $pagination ,
-            'brands' => $data
+            'brands' => $data ,
         ], $status);
     }
 
@@ -183,7 +190,6 @@ class AdminBrandController extends Controller
             'count' => $count ,
             'pagination' => $pagination ,
             'brands' => $data
-
         ], 200);
     }
 
