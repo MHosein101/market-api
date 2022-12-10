@@ -178,17 +178,6 @@ class UserController extends Controller
      */ 
     public function getFavorites(Request $request)
     {
-        // $productsIDs = UserFavorite::selectRaw('product_id')->where('user_id', $request->user->id)->get();
-
-        // $qbuilder = Product::whereIn('id', $productsIDs);
-
-        // $result = SearchHelper::dataWithFilters(
-        //     $request->query() ,
-        //     $qbuilder ,
-        //     null ,
-        //     [ 'state' => 'active' ] , 
-        //     null
-        // );
         $result = SearchHelper::getUserMarkedItems($request->user->id, UserFavorite::class, $request->query());
         extract($result);
 
@@ -235,17 +224,6 @@ class UserController extends Controller
             $msg = 'Product removed from favorites';
         }
 
-        // $productsIDs = UserFavorite::selectRaw('product_id')->where('user_id', $request->user->id)->get();
-
-        // $qbuilder = Product::whereIn('id', $productsIDs);
-
-        // $result = SearchHelper::dataWithFilters(
-        //     $request->query() ,
-        //     $qbuilder ,
-        //     null ,
-        //     [ 'state' => 'active' ] , 
-        //     null
-        // );
         $result = SearchHelper::getUserMarkedItems($request->user->id, UserFavorite::class, $request->query());
         extract($result);
 
@@ -278,17 +256,6 @@ class UserController extends Controller
      */ 
     public function getHistory(Request $request)
     {
-        // $productsIDs = UserHistory::selectRaw('product_id')->where('user_id', $request->user->id)->orderBy('id', 'desc')->get();
-
-        // $qbuilder = Product::whereIn('id', $productsIDs);
-
-        // $result = SearchHelper::dataWithFilters(
-        //     $request->query() ,
-        //     $qbuilder ,
-        //     null ,
-        //     [ 'state' => 'active' ] , 
-        //     null
-        // );
         $result = SearchHelper::getUserMarkedItems($request->user->id, UserHistory::class, $request->query());
         extract($result);
 
@@ -335,17 +302,6 @@ class UserController extends Controller
             $msg = 'Product added to history';
         }
 
-        // $productsIDs = UserHistory::selectRaw('product_id')->where('user_id', $request->user->id)->orderBy('id', 'desc')->get();
-
-        // $qbuilder = Product::whereIn('id', $productsIDs);
-
-        // $result = SearchHelper::dataWithFilters(
-        //     $request->query() ,
-        //     $qbuilder ,
-        //     null ,
-        //     [ 'state' => 'active' ] , 
-        //     null
-        // );
         $result = SearchHelper::getUserMarkedItems($request->user->id, UserHistory::class, $request->query());
         extract($result);
 

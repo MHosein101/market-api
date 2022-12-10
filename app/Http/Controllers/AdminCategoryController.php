@@ -115,7 +115,7 @@ class AdminCategoryController extends Controller
 
         $isUnique = DataHelper::checkUnique(Category::class, $data['name'], $categoryId);
         $msg = 'نام دسته بندی نمیتواند تکراری باشد';
-        $status = 200;
+        $status = 401;
 
         if($isUnique) {
             if($isCreate) {
@@ -138,8 +138,7 @@ class AdminCategoryController extends Controller
         extract($result);
 
         return response()
-        ->json([ 
-            'type' => 'success' ,
+        ->json([
             'status' => $status ,
             'message' => $msg ,
             'count' => $count ,

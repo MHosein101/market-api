@@ -88,16 +88,17 @@ class AdminStoreController extends Controller
     {
         $isCreate = ($storeId == null) ? true : false;
 
-        $uniqueIgnore = $isCreate ? '' : ",$storeId,id";
+        $uniqueIgnoreStore = $isCreate ? '' : ",$storeId,id";
+        $uniqueIgnoreUser = $isCreate ? '' : ",{$request->user->id},id";
 
         $v = DataHelper::validate( response() , $request->all() , 
         [
             'name'          => [ 'نام فروشگاه', 'required|filled|between:3,50' ] ,
-            'economic_code' => [ 'کد اقتصادی', 'nullable|numeric|unique:stores,economic_code' . $uniqueIgnore ] ,
+            'economic_code' => [ 'کد اقتصادی', 'nullable|numeric|unique:stores,economic_code' . $uniqueIgnoreStore ] ,
 
             'owner_full_name'     => [ 'نام و نام خانوادگی مالک فروشگاه', 'required|filled|between:3,50' ] ,
-            'owner_phone_number'  => [ 'شماره همراه مالک فروشگاه', 'required|filled|digits_between:10,11|starts_with:09,9|unique:users,phone_number_primary' . $uniqueIgnore ] ,
-            'owner_national_code' => [ 'کد ملی مالک فروشگاه', 'required|numeric|digits:10|unique:users,national_code' . $uniqueIgnore ] ,
+            'owner_phone_number'  => [ 'شماره همراه مالک فروشگاه', 'required|filled|digits_between:10,11|starts_with:09,9|unique:users,phone_number_primary' . $uniqueIgnoreUser ] ,
+            'owner_national_code' => [ 'کد ملی مالک فروشگاه', 'required|numeric|digits:10|unique:users,national_code' . $uniqueIgnoreUser ] ,
             'second_phone_number' => [ 'شماره همراه دوم', 'nullable|digits_between:10,11|starts_with:09,9' ] ,
 
             'owner_password' => [ 'رمز عبور', 'nullable|min:6' ] ,

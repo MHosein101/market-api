@@ -82,9 +82,9 @@ class AdminBrandController extends Controller
 
         $v = DataHelper::validate( response() , $request->all() , 
         [
-            'brand_name'         => [ 'نام برند', 'required|filled|between:3,50' ] ,
-            'brand_english_name' => [ 'نام انگلیسی برند', 'required|filled|between:3,50' ] ,
-            'brand_company'      => [ 'شرکت برند', 'required|filled|between:3,50' ] ,
+            'brand_name'         => [ 'نام برند', 'required|filled' ] ,
+            'brand_english_name' => [ 'نام انگلیسی برند', 'required|filled' ] ,
+            'brand_company'      => [ 'شرکت برند', 'required|filled' ] ,
         ]);
         if( $v['code'] == 400 ) return $v['response'];
 
@@ -103,7 +103,7 @@ class AdminBrandController extends Controller
 
         $isUnique = DataHelper::checkUnique(Brand::class, $data['name'], $brandId);
         $msg = 'نام برند نمیتواند تکراری باشد';
-        $status = 200;
+        $status = 401;
 
         if($isUnique) {
             if($isCreate) {
@@ -137,8 +137,7 @@ class AdminBrandController extends Controller
         extract($result);
 
         return response()
-        ->json([ 
-            'type' => 'success' ,
+        ->json([
             'status' => $status ,
             'message' => $msg ,
             'count' => $count ,
