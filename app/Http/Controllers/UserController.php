@@ -170,7 +170,7 @@ class UserController extends Controller
      * Return products that user marked as favorite
      * 
      * @see SearchHelper::dataWithFilters(array, QueryBuilder, string|null, array, string|null) : Model[]
-     * @see SearchHelper::dataWithFilters(int, Model, array) : Model[]
+     * @see SearchHelper::getUserMarkedItems(int, Model, array) : Model[]
      *
      * @param  Request $request
      * 
@@ -208,7 +208,7 @@ class UserController extends Controller
      * If $productId is not in user's favorites, add it to list
      * 
      * @see SearchHelper::dataWithFilters(array, QueryBuilder, string|null, array, string|null) : Model[]
-     * @see SearchHelper::dataWithFilters(int, Model, array) : Model[]
+     * @see SearchHelper::getUserMarkedItems(int, Model, array) : Model[]
      *
      * @param  Request $request
      * @param  int $productId
@@ -270,7 +270,7 @@ class UserController extends Controller
      * Get user's visited products
      * 
      * @see SearchHelper::dataWithFilters(array, QueryBuilder, string|null, array, string|null) : Model[]
-     * @see SearchHelper::dataWithFilters(int, Model, array) : Model[]
+     * @see SearchHelper::getUserMarkedItems(int, Model, array) : Model[]
      *
      * @param  Request $request
      * 
@@ -308,7 +308,7 @@ class UserController extends Controller
      * If $productId is number then add this id to user's history
      * 
      * @see SearchHelper::dataWithFilters(array, QueryBuilder, string|null, array, string|null) : Model[]
-     * @see SearchHelper::dataWithFilters(int, Model, array) : Model[]
+     * @see SearchHelper::getUserMarkedItems(int, Model, array) : Model[]
      *
      * @param  Request $request
      * @param  int|null $productId

@@ -5,6 +5,7 @@ namespace App\Http\Helpers;
 use App\Models\User;
 use App\Models\Product;
 use App\Models\ProductCategory;
+use App\Models\SearchProduct;
 use App\Models\UserAccountType;
 
 class SearchHelper
@@ -256,21 +257,24 @@ class SearchHelper
      */ 
     public static function getUserMarkedItems($userId, $class, $query) 
     {
-        $markedProducts = $class::selectRaw('product_id, created_at as marked_at')->where('user_id', $userId);
+        $markedProducts = $class::selectRaw('user_id, product_id, created_at as marked_at');
 
-        $products = Product::selectRaw('*');
+        $products = SearchProduct::selectRaw('products.*');
         
         $products = $products->leftJoinSub($markedProducts, 'marked_items', function ($join) {
             $join->on('products.id', 'marked_items.product_id');
         });
 
-        $products = $products->orderBy('id', 'asc')->orderBy('marked_at', 'desc');
+        $products = $products->where('user_id', $userId)->orderBy('marked_at', 'desc');
 
         $result = SearchHelper::dataWithFilters(
             $query ,
             $products ,
             null ,
-            [ 'state' => 'active' ] , 
+            [
+                'state' => 'active' ,
+                'order' => null
+            ] , 
             null
         );
 
