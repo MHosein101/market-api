@@ -28,7 +28,7 @@ use App\Http\Controllers\UserController;
 //     return $request->user();
 // });
 
-Route::group([ 'middleware' => ['isuser'] , 'prefix' => 'public' ], function () {
+Route::group([ 'middleware' => ['is-user', 'valid-query'] , 'prefix' => 'public' ], function () {
     Route::controller(PublicSearchController::class)->group(function() {
         Route::get('search', 'search');
         Route::get('categories', 'categories');
@@ -47,7 +47,7 @@ Route::controller(AuthController::class)->group(function() {
     Route::post('login/credentials', 'loginCredentials');
 });
 
-Route::group([ 'middleware' => ['user'] , 'prefix' => 'user' ], function () {
+Route::group([ 'middleware' => ['user', 'valid-query'] , 'prefix' => 'user' ], function () {
     Route::controller(UserController::class)->group(function() {
         Route::get('/', 'info');
         Route::post('password', 'changePassword');
@@ -68,7 +68,7 @@ Route::group([ 'middleware' => ['user'] , 'prefix' => 'user' ], function () {
         });
     });
 });
-Route::group([ 'middleware' => ['user', 'admin'] , 'prefix' => 'admin' ], function () {
+Route::group([ 'middleware' => ['user', 'admin', 'valid-query'] , 'prefix' => 'admin' ], function () {
     Route::get('counter', [UserController::class,'adminDataCount']);
     
     Route::controller(AdminCategoryController::class)->group(function() {
@@ -108,7 +108,7 @@ Route::group([ 'middleware' => ['user', 'admin'] , 'prefix' => 'admin' ], functi
 
 Route::get('/store', [StoreController::class,'info'])->middleware(['user', 'store']);
 
-Route::group([ 'middleware' => ['user', 'store', 'confirmed'] ], function () {
+Route::group([ 'middleware' => ['user', 'store', 'store-confirmed', 'valid-query'] ], function () {
 
     Route::get('products/bases', [AdminProductController::class,'getList']);
     Route::get('products/categories', [AdminCategoryController::class,'getList']);

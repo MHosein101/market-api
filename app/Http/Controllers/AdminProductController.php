@@ -98,7 +98,7 @@ class AdminProductController extends Controller
 
         $v = DataHelper::validate( response() , $request->post() , 
         [
-            'title'       => [ 'عنوان محصول', 'required|filled|unique:products,title' . $uniqueIgnore ] ,
+            'title'       => [ 'عنوان محصول', 'required|filled|max:250|unique:products,title' . $uniqueIgnore ] ,
             'barcode'     => [ 'بارکد', 'required|filled|numeric' ] ,
             'description' => [ 'توضیحات', 'nullable|max:500' ] ,
             'brand_id'    => [ 'برند', 'required|numeric' ] ,

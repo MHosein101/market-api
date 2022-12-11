@@ -54,11 +54,14 @@ class Kernel extends HttpKernel
      * @var array<string, class-string|string>
      */
     protected $routeMiddleware = [
-        'isuser' => \App\Http\Middleware\CheckAuth::class,
+        'valid-query' => \App\Http\Middleware\ValidateUrlQueryString::class,
+
+        'is-user' => \App\Http\Middleware\CheckAuth::class,
         'user' => \App\Http\Middleware\ValidateToken::class,
+        
         'admin' => \App\Http\Middleware\AdminCanAccess::class,
         'store' => \App\Http\Middleware\StoreCanAccess::class,
-        'confirmed' => \App\Http\Middleware\StoreConfirmed::class,
+        'store-confirmed' => \App\Http\Middleware\StoreConfirmed::class,
 
         'auth' => \App\Http\Middleware\Authenticate::class,
         'auth.basic' => \Illuminate\Auth\Middleware\AuthenticateWithBasicAuth::class,
