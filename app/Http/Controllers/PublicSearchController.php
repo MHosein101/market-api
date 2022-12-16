@@ -2,13 +2,14 @@
 
 namespace App\Http\Controllers;
 
+use App\Http\Helpers\PublicSearchHelper;
 use App\Models\Brand;
 use App\Models\Product;
 use App\Models\Category;
 use App\Models\StoreProduct;
 use Illuminate\Http\Request;
 use App\Models\SearchProduct;
-use App\Models\SearchCategory;
+use App\Models\MenuCategory;
 use App\Http\Helpers\SearchHelper;
 
 /**
@@ -28,25 +29,35 @@ class PublicSearchController extends Controller
      */ 
     public function search(Request $request)
     {
-        $products = SearchProduct::selectRaw('*');
-
-        $productStores = StoreProduct::selectRaw('product_id, MIN(store_price) as product_price, COUNT(warehouse_count) as product_stores_count')
-        ->where('warehouse_count', '>', 0)
+        $productStores = StoreProduct::
+        selectRaw('product_id, MIN(store_price) as product_price, SUM(warehouse_count) as product_available_count')
         ->groupBy('product_id');
         
-        $products = $products->leftJoinSub($productStores, 'product_stores', function ($join) {
+        $products = SearchProduct::leftJoinSub($productStores, 'product_stores', function ($join) {
             $join->on('products.id', 'product_stores.product_id');
         });
 
+        $priceRange = clone $products;
+        $priceRange = $priceRange->selectRaw('deleted_at, MIN(product_price) as range_min, MAX(product_price) as range_max');
+        
+        if( $request->query('available') == '1' || $request->query('available') == 'true' )
+            $priceRange = $priceRange->where('product_available_count', '>', 0);
+        
+        $priceRange = $priceRange->groupBy('deleted_at')->first();
+
         $result = SearchHelper::dataWithFilters(
             $request->query() , 
-            $products , 
+            clone $products , 
             null , 
             [ 
                 'q' => null ,
                 'brand' => null ,
                 'category' => null ,
                 
+                'fromPrice' => null ,
+                'toPrice' => null ,
+                'perPage' => null ,
+
                 'price_from' => null ,
                 'price_to' => null ,
 
@@ -61,6 +72,13 @@ class PublicSearchController extends Controller
         );
         extract($result);
 
+        $qcategory = $request->query('category');
+        $qquery = $request->query('q');
+
+        $relatedCategories = PublicSearchHelper::relatedCategories($qcategory, clone $products, $qquery);
+        $relatedBrands = PublicSearchHelper::relatedBrands(clone $products, $qquery);
+        $categoriesTypeTitle = PublicSearchHelper::categoryTypeTitle($qcategory);
+
         $status = ( count($data) > 0 ) ? 200 : 204;
         return response()
         ->json([ 
@@ -69,14 +87,17 @@ class PublicSearchController extends Controller
             'count' => $count ,
             'pagination' => $pagination ,
             'data' => [
-                'products_count' => -1 ,
+                'products_count' => $count['total'] ,
                 'price_range' => [
-                    'min' =>  -1 , 
-                    'max' =>  -1 
+                    'min' => $priceRange->range_min ?? 0 , 
+                    'max' => $priceRange->range_max ?? 0
                 ] ,
-                'brands' => [] ,
-                'categories' => [] ,
-                'products' => $data
+                'products' => $data ,
+                'brands' => $relatedBrands ,
+                'categories' => [
+                    'title' => $categoriesTypeTitle ,
+                    'data' => $relatedCategories ,
+                ] ,
             ]
         ], 200);
     }
@@ -110,7 +131,7 @@ class PublicSearchController extends Controller
      */ 
     public function categories(Request $request)
     {
-        $categories = SearchCategory::where('parent_id', null)->get();
+        $categories = MenuCategory::where('parent_id', null)->get();
 
         $status = ( count($categories) > 0 ) ? 200 : 204;
         return response()
@@ -131,7 +152,7 @@ class PublicSearchController extends Controller
      */ 
     public function categoryBreadCrump(Request $request, $categorySlug)
     {
-        $category = Category::where('slug', $categorySlug)->get()->first();
+        $category = Category::where('name', $categorySlug)->first();
 
         if($category == null)
             return response()
@@ -174,7 +195,7 @@ class PublicSearchController extends Controller
      */ 
     public function categoryChildrenTree(Request $request, $categorySlug)
     {
-        $category = Category::where('slug', $categorySlug)->get()->first();
+        $category = Category::where('name', $categorySlug)->first();
         $subs = [];
 
         if($category == null)
@@ -184,22 +205,7 @@ class PublicSearchController extends Controller
                 'message' => 'Category not found.'
             ], 401);
 
-            
-        $subs = Category::where('parent_id', $category->id)->get();
-
-        if( count($subs) == 0 ) {
-            $category = Category::find($category->parent_id);
-            $subs = Category::where('parent_id', $category->id)->get();
-        }
-            
-        $category['sub_categories'] = $subs;
-
-        while( $category->parent_id != null ) {
-            $parent = Category::find($category->parent_id);
-            $parent['sub_categories'] = $category;
-
-            $category = $parent;
-        }
+        $category = PublicSearchHelper::categoryUntilTopParent($category);
 
         return response()
         ->json([ 

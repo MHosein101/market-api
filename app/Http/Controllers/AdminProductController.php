@@ -175,7 +175,7 @@ class AdminProductController extends Controller
         $categoryChanged = true;
 
         if(!$isCreate) {
-            $firstCategory = ProductCategory::where('product_id', $productId)->get()->first();
+            $firstCategory = ProductCategory::where('product_id', $productId)->first();
 
             $categoryChanged = ( $firstCategory->category_id != (int)$request->input('category_id') );
 

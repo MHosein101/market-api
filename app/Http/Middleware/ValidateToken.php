@@ -29,7 +29,7 @@ class ValidateToken
         $apiToken = $request->header('Authorization');
         $apiToken = str_replace('Bearer ', '', $apiToken);
 
-        $tokenRecord = UserToken::where('token', $apiToken)->get()->first();
+        $tokenRecord = UserToken::where('token', $apiToken)->first();
         
         if($tokenRecord == null)
             return response()

@@ -110,7 +110,7 @@ class Product extends Model
      * @return string
      */
     public function getImageUrlAttribute() {
-        $image = ProductImage::where('product_id', $this->id)->where('is_main', true)->get()->first();
+        $image = ProductImage::where('product_id', $this->id)->where('is_main', true)->first();
         return ($image == null) ? request()->getSchemeAndHttpHost() . '/default.jpg' : $image->url;
     }
 
@@ -134,7 +134,7 @@ class Product extends Model
             $check = StoreProduct::withTrashed()
                                  ->where('store_id', request()->user->store_id)
                                  ->where('product_id', $this->id)
-                                 ->get()->first();
+                                 ->first();
             
             return $check != null;
         }

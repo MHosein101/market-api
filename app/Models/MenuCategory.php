@@ -6,7 +6,7 @@ use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\SoftDeletes;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 
-class SearchCategory extends Category
+class MenuCategory extends Category
 {
     /**
      * The table associated with the model.
@@ -81,6 +81,6 @@ class SearchCategory extends Category
      * @return array
      */
     public function getSubCategoriesAttribute() {
-        return SearchCategory::where('parent_id', $this->id)->get();
+        return MenuCategory::where('parent_id', $this->id)->get();
     }
 }

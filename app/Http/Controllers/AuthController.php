@@ -82,7 +82,7 @@ class AuthController extends Controller
         ]);
         if( $v['code'] == 400 ) return $v['response'];
 
-        $user = User::where('national_code', $request->input('national_code'))->get()->first();
+        $user = User::where('national_code', $request->input('national_code'))->first();
         
         if($user == null) {
             return response()
@@ -163,7 +163,7 @@ class AuthController extends Controller
 
         $phoneNumber = $request->input('phone_number');
 
-        $user = User::where('phone_number_primary', $phoneNumber)->get()->first();
+        $user = User::where('phone_number_primary', $phoneNumber)->first();
         
         $message = 'کد تایید را وارد کنید';
         $isSignUp = false;
@@ -224,7 +224,7 @@ class AuthController extends Controller
 
         $phoneNumber = $request->input('phone_number');
 
-        $user = User::where('phone_number_primary', $phoneNumber)->get()->first();
+        $user = User::where('phone_number_primary', $phoneNumber)->first();
         
         if($user == null || $user->account_type != UserAccountType::Normal)
             return response()

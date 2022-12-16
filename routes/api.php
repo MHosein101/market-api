@@ -10,6 +10,7 @@ use App\Http\Controllers\AuthController;
 use App\Http\Controllers\PublicSearchController;
 use App\Http\Controllers\StoreController;
 use App\Http\Controllers\StoreProductController;
+use App\Http\Controllers\UserActivityController;
 use App\Http\Controllers\UserCartController;
 use App\Http\Controllers\UserController;
 
@@ -50,13 +51,17 @@ Route::controller(AuthController::class)->group(function() {
 Route::group([ 'middleware' => ['user', 'valid-query'] , 'prefix' => 'user' ], function () {
     Route::controller(UserController::class)->group(function() {
         Route::get('/', 'info');
-        Route::post('password', 'changePassword');
         Route::get('info', 'info');
+        Route::post('password', 'changePassword');
+        Route::delete('logout', 'logout');
+    });
+    Route::controller(UserActivityController::class)->group(function() {
         Route::get('favorites', 'getFavorites');
         Route::put('favorites/{productId}', 'modifyFavorites');
+        Route::get('analytics', 'getAnalytics');
+        Route::put('analytics/{productId}', 'modifyAnalytics');
         Route::get('history', 'getHistory');
         Route::put('history/{productId?}', 'modifyHistory');
-        Route::delete('logout', 'logout');
     });
     Route::group([ 'prefix' => 'cart' ], function () {
         Route::controller(UserCartController::class)->group(function() {

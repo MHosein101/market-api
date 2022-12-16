@@ -29,6 +29,8 @@ class ValidateUrlQueryString
             'limit' => [ 'limit', 'nullable|numeric|between:1,50' ] ,
             'order' => [ 'order', 'nullable|in:asc,desc' ] ,
 
+            'perPage' => [ 'perPage', 'nullable|numeric|between:1,50' ] ,
+
             'id' => [ 'id', 'nullable|numeric|between:1,2140000000' ] ,
 
             'full_name' => [ 'full_name', 'nullable|max:50' ] ,
@@ -48,12 +50,14 @@ class ValidateUrlQueryString
             'city' => [ 'city', 'nullable|max:50' ] ,
 
             'q' => [ 'q', 'nullable|max:50' ] ,
-            'brand' => [ 'brand', 'nullable' ] ,
-            'category' => [ 'category', 'nullable' ] ,
+            'brand' => [ 'brand', 'nullable|max:50' ] ,
+            'category' => [ 'category', 'nullable|max:50' ] ,
+            'fromPrice' => [ 'fromPrice', 'nullable|numeric|between:1,2140000000' ] ,
+            'toPrice' => [ 'toPrice', 'nullable|numeric|between:1,2140000000' ] ,
             'price_from' => [ 'price_from', 'nullable|numeric|between:1,2140000000' ] ,
             'price_to' => [ 'price_to', 'nullable|numeric|between:1,2140000000' ] ,
-            'available' => [ 'available', 'nullable|in:0,1' ] ,
-            'sort' => [ 'sort', 'nullable|in:time_desc,price_min,price_max' ] ,
+            'available' => [ 'available', 'nullable|in:0,1,true,false' ] ,
+            'sort' => [ 'sort', 'nullable|in:time_desc,price_min,price_max,dateRecent,priceMin,priceMax' ] ,
         ]);
         if( $v['code'] == 400 ) return $v['response'];
 

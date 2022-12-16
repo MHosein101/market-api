@@ -3,9 +3,11 @@
 namespace App\Http\Helpers;
 
 use App\Models\User;
+use App\Models\Brand;
+use App\Models\Category;
 use App\Models\Product;
-use App\Models\ProductCategory;
 use App\Models\SearchProduct;
+use App\Models\ProductCategory;
 use App\Models\UserAccountType;
 
 class SearchHelper
@@ -295,16 +297,39 @@ class SearchHelper
     {
         $query['title'] = $query['q'];
         $query['barcode'] = null;
-        $query['brand_id'] = $query['brand'];
-        $query['category_id'] = $query['category'];
+        
+        $renameing = [
+            'price_from' => 'fromPrice' ,
+            'price_to' => 'toPrice' ,
+            'limit' => 'perPage' ,
+        ];
+        foreach($renameing as $new => $old)
+            if($query[$old])
+                $query[$new] = $query[$old];
+
+        $dataChecks = [
+            'brand' => \App\Models\Brand::class ,
+            'category' => \App\Models\Category::class ,
+        ];
+        foreach($dataChecks as $key => $class) {
+            $query[ $key . '_id' ] = null;
+            
+            if($query[$key] != null) {
+                $record = $class::where('slug', $query[$key])->first();
+                $query[ $key . '_id' ] = $record ? $record->id : null;
+            }
+        }
 
         $qbuilder = SearchHelper::filterProducts(clone $qbuilder, $query);
 
         switch($query['sort']) {
+            case 'dateRecent': 
             case 'time_desc': $qbuilder = $qbuilder->orderBy('created_at', 'desc');
                 break;
+            case 'priceMin': 
             case 'price_min': $qbuilder = $qbuilder->orderBy('product_price', 'asc');
                 break;
+            case 'priceMax': 
             case 'price_max': $qbuilder = $qbuilder->orderBy('product_price', 'desc');
                 break;
         }
@@ -314,8 +339,8 @@ class SearchHelper
                                  ->where('product_price', '<=', $query['price_to']);
         }
 
-        if( $query['available'] == '1' )
-            $qbuilder = $qbuilder->where('product_stores_count', '!=', null);
+        if( $query['available'] == '1' || $query['available'] == 'true' )
+            $qbuilder = $qbuilder->where('product_available_count', '>', 0);
 
         return $qbuilder;
     }

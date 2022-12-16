@@ -28,7 +28,7 @@ class SearchProduct extends Product
      * @var array
      */
     protected $hidden = [ 
-        'product_id', 'product_price', 'product_stores_count', 
+        'product_id', 'product_price', 'product_available_count', 
         'barcode', 'description', 'brand_id', 'created_at', 'updated_at', 'deleted_at'
 
     ];
@@ -39,7 +39,7 @@ class SearchProduct extends Product
      * @var array
      */
     protected $appends = [ 
-        'price', 'stores_count', 'is_available', 'image_url' 
+        'price_start', 'shops_count', 'is_available', 'image_url' , 'shop_name' , 'is_like', 'is_analytic'
     ];
 
     /**
@@ -48,16 +48,7 @@ class SearchProduct extends Product
      * @return boolean
      */
     public function getIsAvailableAttribute() {
-        return ($this->stores_count > 0);
-    }
-
-    /**
-     * Return 0 if product_stores_count is null
-     * 
-     * @return int
-     */
-    public function getStoresCountAttribute() {
-        return $this->product_stores_count ?? 0;
+        return ($this->product_available_count > 0);
     }
 
     /**
@@ -65,7 +56,55 @@ class SearchProduct extends Product
      * 
      * @return int
      */
-    public function getPriceAttribute() {
+    public function getPriceStartAttribute() {
         return $this->product_price ?? 0;
+    }
+
+    /**
+     * Return 0 if product_available_count is null
+     * 
+     * @return int
+     */
+    public function getShopsCountAttribute() {
+        return StoreProduct::where('product_id', $this->id)->count();
+    }
+
+    /**
+     * If product available in just one store
+     * return the store name
+     * 
+     * @return string
+     */
+    public function getShopNameAttribute() {
+        if($this->shops_count == 1) {
+            $sp = StoreProduct::where('product_id', $this->id)->first();
+            return Store::find($sp->store_id)->name;
+        }
+        return '(Multiple)';
+    }
+
+    /**
+     * Return if product marked for users's favorites list
+     * 
+     * @return boolean
+     */
+    public function getIsLikeAttribute() {
+        if(request()->user != null) {
+            $record = UserFavorite::where('user_id', request()->user->id)
+            ->where('product_id', $this->id)
+            ->first();
+
+            return $record != null;
+        }
+        return false;
+    }
+
+    /**
+     * Return if product marked for users's analytics list
+     * 
+     * @return boolean
+     */
+    public function getIsAnalyticAttribute() {
+        return false;
     }
 }

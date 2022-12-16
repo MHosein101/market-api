@@ -112,7 +112,7 @@ class User extends Authenticatable
      * @return boolean
      */
     public function getAddressAttribute() {
-        $adds = UserAddress::where('user_id', $this->id)->get()->first();
+        $adds = UserAddress::where('user_id', $this->id)->first();
         return ( $adds == null ) ? [] : $adds ;
     }
     
