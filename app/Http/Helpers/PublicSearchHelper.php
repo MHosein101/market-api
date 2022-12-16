@@ -5,6 +5,7 @@ namespace App\Http\Helpers;
 use App\Models\Brand;
 use App\Models\Category;
 use App\Models\ProductCategory;
+use App\Models\PublicStoreProduct;
 
 /**
  * Helper methods for public search data
@@ -35,13 +36,16 @@ class PublicSearchHelper
         }
 
         $catsId = array_reverse($catsId);
-        $categories = [ 'parent' => null , 'sub1' => null , 'sub2' => null , 'sub3' => null ];
+        $categories = [ 'parent' => null , 'sub1' => null , 'sub2' => null , 'sub3' => null, 'sub4' => null ];
 
         $i = 0;
         $lastCatId = null;
         $keys = array_keys($categories);
+        
+        $list = [ 'type' => 'unavailable', 'title' => 'زیر دسته ای وجود ندارد' ];
 
         foreach($keys as $k) {
+
             if( isset($catsId[$i]) ) {
                 $category = Category::find($catsId[$i]);
                 $categories[$k] = [ 
@@ -58,7 +62,7 @@ class PublicSearchHelper
                 $k = $keys[$i-1];
                 $subs = Category::where('parent_id', $lastCatId)->get();
 
-                if($categories[$k]['is_current'] && count($subs) == 0) {
+                if(count($subs) == 0) {
                     $categories[$k] = null;
                     $k = $keys[$i-2];
                     $lastCatId = Category::find($lastCatId)->parent_id;
@@ -66,10 +70,10 @@ class PublicSearchHelper
                 }
 
                 $categories[$k]['is_list'] = true;
-                $categories[$k]['list'] = [];
+                $list = [];
 
                 foreach($subs as $s) {
-                    $categories[$k]['list'][] = [ 
+                    $list[] = [
                         'type' => 'category' , 
                         'title' => $s->name , 
                         'slug' => $s->slug ,
@@ -80,7 +84,12 @@ class PublicSearchHelper
             }
         }
 
-        return $categories;
+        unset($categories['sub4']);
+
+        return [ 
+            'data' => $categories , 
+            'list' => $list 
+        ];
 
         /* $subs = Category::where('parent_id', $category->id)->get();
         if( count($subs) == 0 ) {
@@ -99,16 +108,16 @@ class PublicSearchHelper
     /**
      * Return value of categories title by search params
      *
-     * @param string $queryCategoryName
+     * @param string $queryCategorySlug
      * 
      * @return string
      */ 
-    public static function categoryTypeTitle($queryCategoryName)
+    public static function categoryTypeTitle($queryCategorySlug)
     {
-        if($queryCategoryName == null)
+        if($queryCategorySlug == null)
             return 'دسته های پیشنهادی';
         
-        $category = Category::where('name', $queryCategoryName)->first();
+        $category = Category::where('slug', $queryCategorySlug)->first();
 
         if($category == null)
             return 'دسته های پیشنهادی';
@@ -133,7 +142,7 @@ class PublicSearchHelper
     public static function relatedCategories($queryCategoryName, $qbuilder, $q)
     {
         if($queryCategoryName) {
-            $category = Category::where('name', $queryCategoryName)->first();
+            $category = Category::where('slug', $queryCategoryName)->first();
             if($category)
                 return PublicSearchHelper::categoryUntilTopParent($category);
         }
@@ -155,6 +164,32 @@ class PublicSearchHelper
             return $categories;
         }
         return [];
+    }
+
+    /**
+     * Return bread crump from category
+     *
+     * @param Category $category
+     * 
+     * @return array
+     */ 
+    public static function categoryBreadCrump($category)
+    {
+        $path = [];
+        $path[] = [ 
+            'type' => 'category' , 
+            'title' => $category->name
+        ];
+
+        while($category->parent_id != null) {
+            $category = Category::find($category->parent_id);
+            $path[] = [ 
+                'type' => 'category' , 
+                'title' => $category->name
+            ];
+        }
+
+        return array_reverse($path);
     }
 
     /**
@@ -180,5 +215,21 @@ class PublicSearchHelper
 
         return $brands;
     }
+
+    /**
+     * Return product store's sales with filter
+     *
+     * @param int $productId
+     * @param array|null $filters
+     * 
+     * @return array
+     */ 
+    public static function productSales($productId, $filters = null)
+    {
+        return PublicStoreProduct::where('product_id', $productId)
+        ->orderBy('store_price', 'asc')
+        ->get();
+    }
+
 
 }

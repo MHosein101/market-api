@@ -96,7 +96,8 @@ class PublicSearchController extends Controller
                 'brands' => $relatedBrands ,
                 'categories' => [
                     'title' => $categoriesTypeTitle ,
-                    'data' => $relatedCategories ,
+                    'data' => $relatedCategories['data'] ?? $relatedCategories ,
+                    'list' => $relatedCategories['list'] ?? []
                 ] ,
             ]
         ], 200);
@@ -152,7 +153,7 @@ class PublicSearchController extends Controller
      */ 
     public function categoryBreadCrump(Request $request, $categorySlug)
     {
-        $category = Category::where('name', $categorySlug)->first();
+        $category = Category::where('slug', $categorySlug)->first();
 
         if($category == null)
             return response()
@@ -161,28 +162,13 @@ class PublicSearchController extends Controller
                 'message' => 'Category not found.'
             ], 401);
 
-        $path = [];
-
-        $path[] = [ 
-            'type' => 'category' , 
-            'title' => $category->name
-        ];
-
-        while($category->parent_id != null) {
-
-            $category = Category::find($category->parent_id);
-
-            $path[] = [ 
-                'type' => 'category' , 
-                'title' => $category->name 
-            ];
-        }
+        $path = PublicSearchHelper::categoryBreadCrump($category);
 
         return response()
         ->json([ 
             'status' => 200 ,
             'message' => 'OK' ,
-            'data' => array_reverse($path)
+            'data' => $path
         ], 200);
     }
     /**
@@ -195,7 +181,7 @@ class PublicSearchController extends Controller
      */ 
     public function categoryChildrenTree(Request $request, $categorySlug)
     {
-        $category = Category::where('name', $categorySlug)->first();
+        $category = Category::where('slug', $categorySlug)->first();
         $subs = [];
 
         if($category == null)

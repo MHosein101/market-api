@@ -7,6 +7,7 @@ use App\Http\Controllers\AdminStoreController;
 use App\Http\Controllers\AdminUserController;
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\AuthController;
+use App\Http\Controllers\PublicProductController;
 use App\Http\Controllers\PublicSearchController;
 use App\Http\Controllers\StoreController;
 use App\Http\Controllers\StoreProductController;
@@ -36,6 +37,9 @@ Route::group([ 'middleware' => ['is-user', 'valid-query'] , 'prefix' => 'public'
         Route::get('categories/{categorySlug}/path', 'categoryBreadCrump');
         Route::get('categories/{categorySlug}/sub', 'categoryChildrenTree');
         Route::get('brands', 'brands');
+    });
+    Route::controller(PublicProductController::class)->group(function() {
+        Route::get('product/{productSlug}', 'detail');
     });
 });
 
