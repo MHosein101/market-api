@@ -3,6 +3,7 @@
 namespace App\Http\Helpers;
 
 use App\Models\Brand;
+use App\Models\Store;
 use App\Models\Category;
 use App\Models\ProductCategory;
 use App\Models\PublicStoreProduct;
@@ -42,7 +43,7 @@ class PublicSearchHelper
         $lastCatId = null;
         $keys = array_keys($categories);
         
-        $list = [ 'type' => 'unavailable', 'title' => 'زیر دسته ای وجود ندارد' ];
+        $list = [ [ 'type' => 'unavailable', 'title' => 'زیر دسته ای وجود ندارد' ] ];
 
         foreach($keys as $k) {
 
@@ -62,15 +63,15 @@ class PublicSearchHelper
                 $k = $keys[$i-1];
                 $subs = Category::where('parent_id', $lastCatId)->get();
 
-                if(count($subs) == 0) {
+                if(count($subs) == 0 && $i != 1) {
                     $categories[$k] = null;
                     $k = $keys[$i-2];
                     $lastCatId = Category::find($lastCatId)->parent_id;
                     $subs = Category::where('parent_id', $lastCatId)->get();
+                    $list = [];
                 }
 
                 $categories[$k]['is_list'] = true;
-                $list = [];
 
                 foreach($subs as $s) {
                     $list[] = [
@@ -124,7 +125,7 @@ class PublicSearchHelper
 
         $subs = Category::where('parent_id', $category->id)->count();
 
-        if($subs > 0)
+        if($subs > 0 || $category->parent_id == null)
             return 'دسته های دقیق تر';
         else
             return 'دسته های مشابه';
@@ -222,13 +223,38 @@ class PublicSearchHelper
      * @param int $productId
      * @param array|null $filters
      * 
-     * @return array
+     * @return PublicStoreProduct[]
      */ 
     public static function productSales($productId, $filters = null)
     {
-        return PublicStoreProduct::where('product_id', $productId)
-        ->orderBy('store_price', 'asc')
-        ->get();
+        $stores = Store::selectRaw('id, name as title, province, city');
+
+        $offers = PublicStoreProduct::leftJoinSub($stores, 'stores', function ($join) {
+            $join->on('store_products.store_id', 'stores.id');
+        });
+
+        $offers = $offers
+        ->selectRaw('title, store_products.store_price as price, province, city, warehouse_count > 0 as is_available, cash_payment_discount, store_id, product_id')
+        ->where('product_id', $productId)
+        ->orderBy('is_available', 'desc')
+        ->orderBy('store_price', 'asc');
+
+        if($filters != null) {
+            extract($filters); // $provinces, $cities, $ignores
+
+            $offers->where(function($query) use ($provinces, $cities, $ignores) {
+                if($provinces != null)
+                    $query->whereIn('stores.province', $provinces);
+
+                if($cities != null)
+                    $query->orWhereIn('stores.city', $cities);
+
+                if($ignores != null)
+                    $query->whereNotIn('stores.id', $ignores);
+            });
+        }
+        
+        return $offers->get();
     }
 
 

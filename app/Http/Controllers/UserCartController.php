@@ -41,15 +41,16 @@ class UserCartController extends Controller
      * 
      * @return Response
      */ 
-    public function addProduct(Request $request, $productId)
+    public function addProduct(Request $request, $storeProductId)
     {
-        $storeId = StoreProduct::find($productId)->store_id;
+        $sp = StoreProduct::find($storeProductId);
 
         $newItem = UserCart::create([
-            'qty' => 1 ,
+            'count' => 1 ,
             'is_payment_cash' => false ,
-            'product_id' => $productId ,
-            'store_id' => $storeId ,
+            'product_id' => $storeProductId ,
+            'store_id' => $sp->store_id ,
+            'base_product_id' => $sp->product_id ,
             'user_id' => $request->user->id ,
         ]);
 
@@ -60,33 +61,36 @@ class UserCartController extends Controller
             'product' => $newItem
         ], 200);
     }
-    
+
     /**
-     * Update cart item details
+     * Add product to the cart
      *
      * @param Request $request
+     * @param int $productId
      * 
      * @return Response
      */ 
-    public function updateCart(Request $request)
+    public function updateCart(Request $request, $itemId, $type)
     {
-        $itemsCount = $request->input('items_count', 0);
+        $update = UserCart::where('id', $itemId);
 
-        for($i = 0; $i < $itemsCount; $i++) {
-            
-            $id = $request->input("cart_items_{$i}_id");
-            $qty = $request->input("cart_items_{$i}_qty");
-            $ipc = $request->input("cart_items_{$i}_is_payment_cash");
+        if($type == 'up')
+            $update = $update->increment('count', 1);
 
-            UserCart::where('id', $id)
-            ->update([
-                'qty' => $qty ,
-                'is_payment_cash' => ($ipc == 'true') ,
-            ]);
+        if($type == 'down')
+            $update = $update->decrement('count', 1);
+
+        if($type == 'payment') {
+            $ipc = UserCart::where('user_id', $request->user->id)
+            ->first()->is_payment_cash;
+
+            UserCart::where('user_id', $request->user->id)
+            ->update([ 'is_payment_cash' => !$ipc ]);
         }
 
-        $cart = UserCart::where('user_id', $request->user->id)->get();
 
+        $cart = UserCart::where('user_id', $request->user->id)->get();
+        
         return response()
         ->json([ 
             'status' => 200 ,

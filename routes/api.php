@@ -39,7 +39,11 @@ Route::group([ 'middleware' => ['is-user', 'valid-query'] , 'prefix' => 'public'
         Route::get('brands', 'brands');
     });
     Route::controller(PublicProductController::class)->group(function() {
-        Route::get('product/{productSlug}', 'detail');
+        Route::group([ 'middleware' => ['valid-product'] , 'prefix' => 'product' ], function () {      
+            Route::get('/{productSlug}', 'detail');
+            Route::get('/{productSlug}/sales', 'sales');
+            Route::get('/{productSlug}/similars', 'similars');
+        });
     });
 });
 
@@ -71,7 +75,7 @@ Route::group([ 'middleware' => ['user', 'valid-query'] , 'prefix' => 'user' ], f
         Route::controller(UserCartController::class)->group(function() {
             Route::get('/', 'getAll');
             Route::post('/{productId}', 'addProduct');
-            Route::post('update', 'updateCart');
+            Route::put('/{productId}/{type}', 'updateCart');
             Route::delete('/{itemId}', 'deleteItem');
             Route::delete('clear', 'clearCart');
         });

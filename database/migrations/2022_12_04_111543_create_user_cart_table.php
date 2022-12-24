@@ -16,11 +16,12 @@ class CreateUserCartTable extends Migration
         Schema::create('user_cart', function (Blueprint $table) {
             $table->id();
 
-            $table->smallInteger('qty')->default(1);
+            $table->smallInteger('count')->default(1);
             $table->boolean('is_payment_cash')->default(false);
 
-            $table->unsignedBigInteger('product_id');
             $table->unsignedBigInteger('store_id');
+            $table->unsignedBigInteger('product_id');
+            $table->unsignedBigInteger('base_product_id');
 
             $table->unsignedBigInteger('user_id');
 

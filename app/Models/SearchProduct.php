@@ -28,7 +28,7 @@ class SearchProduct extends Product
      * @var array
      */
     protected $hidden = [ 
-        'product_id', 'product_price', 'product_available_count', 
+        'product_id', 'category_id', 'product_price', 'product_available_count', 
         'barcode', 'description', 'brand_id', 'created_at', 'updated_at', 'deleted_at'
 
     ];
@@ -39,7 +39,7 @@ class SearchProduct extends Product
      * @var array
      */
     protected $appends = [ 
-        'price_start', 'shops_count', 'is_available', 'image_url' , 'shop_name' , 'is_like', 'is_analytic'
+        'price_start', 'shops_count', 'is_available', 'image_url' , 'shop_name' , 'is_like', 'is_analytic', 'is_cart'
     ];
 
     /**
@@ -105,6 +105,22 @@ class SearchProduct extends Product
      * @return boolean
      */
     public function getIsAnalyticAttribute() {
+        return false;
+    }
+
+    /**
+     * Return if product is in cart
+     * 
+     * @return boolean
+     */
+    public function getIsCartAttribute() {
+        // if(request()->user != null) {
+        //     $record = UserCart::where('user_id', request()->user->id)
+        //     ->where('product_id', $this->id)
+        //     ->first();
+
+        //     return $record != null;
+        // }
         return false;
     }
 }

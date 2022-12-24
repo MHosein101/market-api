@@ -32,40 +32,45 @@ class PublicStoreProduct extends StoreProduct
      *
      * @var array
      */
-    protected $hidden = [ 
-        // 'production_date' ,
-        // 'expire_date' ,
-        'production_price' ,
-        'consumer_price' ,
-        // 'store_price' ,
-        'store_price_1' ,
-        'store_price_2' ,
-        // 'price_update_time' ,
-        'per_unit' ,
-        // 'warehouse_count' ,
-        // 'delivery_description' ,
-        // 'store_note' ,
-        'cash_payment_discount' ,
+    protected $hidden = [
+        'id', // 'is_available' ,
+        'production_date' , 'expire_date' ,
+        'production_price' , 'consumer_price' ,
+        'store_price' , 'store_price_1' , 'store_price_2' ,
+        'price_update_time' ,
+        'per_unit' , 'warehouse_count' ,
+        'delivery_description' , 'store_note' ,
+        // 'cash_payment_discount' , 
         'commission' ,
         'admin_confirmed' ,
-        'product_id', 
-        // 'store_id', 
-        'created_at', 'updated_at', 'deleted_at' ];
+        // 'product_id', 
+        'store_id', 
+        'created_at', 'updated_at', 'deleted_at' 
+    ];
 
     /**
      * New attributes that should be appended to model
      *
      * @var array
      */
-    protected $appends = [ 'is_available' ];
+    protected $appends = [ 'discounts' ];
 
     /**
-     * Return if product available in this store
-     * 
-     * @return boolean
+     * Casts field value to specific type
+     *
+     * @var array
      */
-    public function getIsAvailableAttribute() {
-        return $this->warehouse_count > 0;
+    protected $casts = [
+        'is_available' => 'boolean'
+    ];
+    
+    /**
+     * Return step discounts for products
+     * 
+     * @return StoreProductDiscount[]
+     */
+    public function getDiscountsAttribute() {
+        return StoreProductDiscount::where('product_id', $this->id)->get();
     }
 
 }

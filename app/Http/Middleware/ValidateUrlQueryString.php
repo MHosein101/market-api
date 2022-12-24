@@ -34,8 +34,8 @@ class ValidateUrlQueryString
             'id' => [ 'id', 'nullable|numeric|between:1,2140000000' ] ,
 
             'full_name' => [ 'full_name', 'nullable|max:50' ] ,
-            'national_code' => [ 'national_code', 'nullable|numeric|digits:10' ] ,
-            'number' => [ 'number', 'nullable|numeric|digits_between:10,13' ] ,
+            'national_code' => [ 'national_code', 'nullable|numeric|digits_between:1,10' ] ,
+            'number' => [ 'number', 'nullable|numeric|digits_between:1,13' ] ,
 
             'name' => [ 'name', 'nullable|max:50' ] ,
             'company' => [ 'company', 'nullable|max:50' ] ,

@@ -55,6 +55,8 @@ class Kernel extends HttpKernel
      */
     protected $routeMiddleware = [
         'valid-query' => \App\Http\Middleware\ValidateUrlQueryString::class,
+        
+        'valid-product' => \App\Http\Middleware\PublicProductValidate::class,
 
         'is-user' => \App\Http\Middleware\CheckAuth::class,
         'user' => \App\Http\Middleware\ValidateToken::class,

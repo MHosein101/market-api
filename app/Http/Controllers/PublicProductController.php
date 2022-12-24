@@ -10,32 +10,26 @@ use Illuminate\Http\Request;
 use App\Models\PublicProduct;
 use App\Models\ProductCategory;
 use App\Http\Helpers\PublicSearchHelper;
+use App\Http\Helpers\SearchHelper;
+use App\Models\SearchProduct;
 
 /**
- * Public view of product's information
+ * Public view of single product's information
  * 
  * @author Hosein marzban
  */ 
 class PublicProductController extends Controller
 {
     /**
-     * Debug helper for developer
+     * Return detail for single product page
      * 
      * @param Request $request
-     * @param string $productSlug
      * 
      * @return Response
      */ 
-    public function detail(Request $request, $productSlug)
+    public function detail(Request $request)
     {
-        $product = PublicProduct::where('slug', $productSlug)->first();
-
-        if($product == null)
-            return response()
-            ->json([ 
-                'status' => 401 ,
-                'message' => 'Product not found.'
-            ], 401);
+        $product = $request->product;
 
         $priceRange = StoreProduct::selectRaw('MIN(store_price) as range_min, MAX(store_price) as range_max')
         ->where('product_id', $product->id)
@@ -48,13 +42,11 @@ class PublicProductController extends Controller
         $categoriesBreadCrump = PublicSearchHelper::categoryBreadCrump( Category::find($categoryId) );
 
         $breadCrumpPath = $categoriesBreadCrump;
-        $brandName = "{$brand->name} ({$brand->english_name})";
-
         $breadCrumpPath[] = [ 
             'type' => 'brand' , 
-            'title' => $brandName , 
+            'title' => "{$brand->name} ({$brand->english_name})" , 
             'brand' => $brand->name , 
-            'category' => ''
+            'slug' => $brand->slug ,
         ];
 
         $sales = PublicSearchHelper::productSales($product->id);
@@ -72,8 +64,116 @@ class PublicProductController extends Controller
                 'product' => $product ,
                 'brand' => $brand ,
                 'categories' => $categoriesBreadCrump ,
-                'sales' => $sales ,
+                'stores' => $sales ,
             ]
         ], 200);
     }
+
+    
+    /**
+     * Return product sales with filters
+     * 
+     * @param Request $request
+     * 
+     * @return Response
+     */ 
+    public function sales(Request $request)
+    {
+        $product = $request->product;
+        $filters = SearchHelper::configQueryParams($request->query(), [
+            'provinces' => null ,
+            'cities' => null ,
+        ]);
+
+        foreach(['provinces', 'cities'] as $k) {
+            if($filters[$k] != null)
+                $filters[$k] = explode('|', $filters[$k]);
+        }
+
+        /* if( $filters['provinces'] == null && $filters['cities'] == null ) 
+            return response()->json([
+                'status' => 400 ,
+                'message' => 'Define at least one of these parameters : provinces , cities'
+            ], 400); */
+
+        $filters['ignores'] = null;
+        $filteredSales = PublicSearchHelper::productSales($product->id, $filters);
+        
+        $ignoreIDs = [];
+        foreach($filteredSales as $f)
+            $ignoreIDs[] = $f->store_id;
+
+        $otherSales = PublicSearchHelper::productSales($product->id, [
+            'ignores' => $ignoreIDs ,
+            'provinces' => null , 'cities' => null ,
+        ]);
+
+        return response()
+        ->json([
+            'status' => 200 ,
+            'message' => 'Ok' ,
+            'counts' => [
+                'filtered' => count($filteredSales) , 
+                'others' => count($otherSales)
+            ] ,
+            'data' => [
+                'filtered' => $filteredSales ,
+                'others' => $otherSales
+            ]
+        ], 200);
+
+    }
+
+    /**
+     * Return similar products
+     * 
+     * @param Request $request
+     * 
+     * @return Response
+     */ 
+    public function similars(Request $request)
+    {
+        $product = $request->product;
+
+        $productStores = StoreProduct::
+        selectRaw('product_id, MIN(store_price) as product_price, SUM(warehouse_count) as product_available_count')
+        ->groupBy('product_id');
+        
+        $products = SearchProduct::leftJoinSub($productStores, 'product_stores', function ($join) {
+            $join->on('products.id', 'product_stores.product_id');
+        })
+        ->where('products.id', '!=', $product->id);
+        
+        $c = ProductCategory::where('product_id', $product->id)->first()->category_id;
+        $c = Category::find($c)->slug;
+
+        $result = SearchHelper::dataWithFilters(
+            [] , 
+            clone $products , 
+            null , 
+            [ 
+                'category' => $c ,
+
+                'q' => null ,
+                'brand' => null ,
+                'fromPrice' => null , 'toPrice' => null , 'perPage' => null ,
+                'price_from' => null , 'price_to' => null ,
+                'available' => null ,
+                'order' => null , 'sort' => 'time_desc' ,
+                'state' => 'active'
+            ] , 
+            'filterSearchProducts'
+        );
+        extract($result);
+
+        return response()
+        ->json([
+            'status' => 200 ,
+            'message' => 'OK' ,
+            'count' => $count['total'] ,
+            'data' => $data
+        ], 200);
+    }
+
+
 }
