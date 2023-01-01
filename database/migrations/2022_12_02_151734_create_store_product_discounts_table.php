@@ -17,8 +17,8 @@ class CreateStoreProductDiscountsTable extends Migration
             $table->id();
 
             $table->string('discount_type');
-            $table->unsignedInteger('discount_value');
-            $table->unsignedInteger('final_price');
+            $table->unsignedBigInteger('discount_value');
+            $table->unsignedBigInteger('final_price');
 
             $table->unsignedBigInteger('product_id');
 

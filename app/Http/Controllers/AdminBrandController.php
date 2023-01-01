@@ -90,7 +90,7 @@ class AdminBrandController extends Controller
 
         $v = DataHelper::validate( response() , $request->file() , 
         [
-            'brand_logo' => [ 'فایل لوگو', 'file|image|between:16,1024' ] ,
+            'brand_logo' => [ 'فایل لوگو', 'file|image|between:4,1024' ] ,
         ]);
         if( $v['code'] == 400 ) return $v['response'];
 

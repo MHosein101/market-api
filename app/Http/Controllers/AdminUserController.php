@@ -113,7 +113,7 @@ class AdminUserController extends Controller
 
         $v = DataHelper::validate( response() , $request->file() , 
         [
-            'profile_image' => [ 'عکس پروفایل', 'file|image|between:16,1024' ] ,
+            'profile_image' => [ 'عکس پروفایل', 'file|image|between:4,1024' ] ,
         ]);
         if( $v['code'] == 400 ) {
             if($signUp)

@@ -42,6 +42,6 @@ class PublicProduct extends SearchProduct
      * @var array
      */
     protected $appends = [ 
-        'shops_count', 'images', 'is_image_url', 'image_url' , 'is_like', 'is_analytic'
+        'shops_count', 'images', 'is_image_url', 'image_url' , 'is_like', 'is_analytic', 'is_cart'
     ];
 }

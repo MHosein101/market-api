@@ -114,13 +114,13 @@ class SearchProduct extends Product
      * @return boolean
      */
     public function getIsCartAttribute() {
-        // if(request()->user != null) {
-        //     $record = UserCart::where('user_id', request()->user->id)
-        //     ->where('product_id', $this->id)
-        //     ->first();
+        if(request()->user != null) {
+            $record = UserCart::where('user_id', request()->user->id)
+            ->where('base_product_id', $this->id)
+            ->first();
 
-        //     return $record != null;
-        // }
+            return $record != null;
+        }
         return false;
     }
 }

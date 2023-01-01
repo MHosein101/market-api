@@ -234,7 +234,7 @@ class PublicSearchHelper
         });
 
         $offers = $offers
-        ->selectRaw('title, store_products.store_price as price, province, city, warehouse_count > 0 as is_available, cash_payment_discount, store_id, product_id')
+        ->selectRaw('store_products.id as product_id, store_id, title, store_products.store_price as price, province, city, warehouse_count > 0 as is_available, cash_payment_discount')
         ->where('product_id', $productId)
         ->orderBy('is_available', 'desc')
         ->orderBy('store_price', 'asc');

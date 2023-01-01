@@ -19,6 +19,8 @@ class CreateUserCartTable extends Migration
             $table->smallInteger('count')->default(1);
             $table->boolean('is_payment_cash')->default(false);
 
+            $table->unsignedInteger('current_price')->default(0);
+
             $table->unsignedBigInteger('store_id');
             $table->unsignedBigInteger('product_id');
             $table->unsignedBigInteger('base_product_id');
@@ -37,6 +39,6 @@ class CreateUserCartTable extends Migration
      */
     public function down()
     {
-        Schema::dropIfExists('user_carts');
+        Schema::dropIfExists('user_cart');
     }
 }

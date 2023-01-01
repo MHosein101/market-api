@@ -117,7 +117,7 @@ class AdminProductController extends Controller
         
         $filesRules = [];   
         foreach($request->file() as $name => $_)
-            $filesRules[$name] = [ 'عکس محصول' , 'file|image|between:16,1024' ];
+            $filesRules[$name] = [ 'عکس محصول' , 'file|image|between:4,1024' ];
 
         $v = DataHelper::validate( response() , $request->file(), $filesRules);
         if( $v['code'] == 400 ) return $v['response'];

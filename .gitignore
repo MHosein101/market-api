@@ -17,3 +17,4 @@ package.json
 .editorconfig
 .styleci.yml
 webpack.mix.js
+/_sample

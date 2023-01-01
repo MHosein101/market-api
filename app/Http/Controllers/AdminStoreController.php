@@ -132,9 +132,9 @@ class AdminStoreController extends Controller
 
         $v = DataHelper::validate( response() , $request->file() , 
         [
-            'logo_image'    => [ 'عکس لوگو', 'file|image|between:16,1024' ] ,
-            'banner_image'  => [ 'عکس سر در (بنر)', 'file|image|between:64,2048' ] ,
-            'license_image' => [ 'عکس مجوز', 'file|image|between:64,2048' ] ,
+            'logo_image'    => [ 'عکس لوگو', 'file|image|between:4,1024' ] ,
+            'banner_image'  => [ 'عکس سر در (بنر)', 'file|image|between:4,2048' ] ,
+            'license_image' => [ 'عکس مجوز', 'file|image|between:4,2048' ] ,
         ]);
         if( $v['code'] == 400 ) {
             if($signUp)

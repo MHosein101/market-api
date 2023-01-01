@@ -44,7 +44,7 @@ class PublicStoreProduct extends StoreProduct
         'commission' ,
         'admin_confirmed' ,
         // 'product_id', 
-        'store_id', 
+        // 'store_id', 
         'created_at', 'updated_at', 'deleted_at' 
     ];
 
@@ -53,7 +53,7 @@ class PublicStoreProduct extends StoreProduct
      *
      * @var array
      */
-    protected $appends = [ 'discounts' ];
+    protected $appends = [ 'discounts', 'cart' ];
 
     /**
      * Casts field value to specific type
@@ -70,7 +70,31 @@ class PublicStoreProduct extends StoreProduct
      * @return StoreProductDiscount[]
      */
     public function getDiscountsAttribute() {
-        return StoreProductDiscount::where('product_id', $this->id)->get();
+        return StoreProductDiscount::where('product_id', $this->product_id)->get();
+    }
+
+    /**
+     * Return if product is in cart
+     * 
+     * @return boolean
+     */
+    public function getCartAttribute() {
+        $isCart = false;
+        $count = 0;
+
+        if(request()->user != null) {
+            $record = UserCart::where('user_id', request()->user->id)
+            ->where('product_id', $this->product_id)
+            ->first();
+
+            $isCart = $record != null;
+            $count = $isCart ? $record->count : 0;
+        }
+        
+        return [
+            'is_cart' => $isCart ,
+            'count' => $count ,
+        ];
     }
 
 }
