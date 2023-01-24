@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\Product;
 use App\Models\UserHistory;
 use App\Models\UserAnalytic;
 use App\Models\UserFavorite;
@@ -10,7 +11,7 @@ use App\Http\Helpers\SearchHelper;
 
 /**
  *  Manage normal user's activity
- * Histories, Favorites, Analytics list
+ *  Histories, Favorites, Analytics list
  * 
  * @author Hosein marzban
  */ 
@@ -200,28 +201,37 @@ class UserActivityController extends Controller
      * @see SearchHelper::getUserMarkedItems(int, Model, array) : Model[]
      *
      * @param  Request $request
-     * @param  int|null $productId
+     * @param  string|null $productSlug
      * 
      * @return Response
      */ 
-    public function modifyHistory(Request $request, $productId = null)
+    public function modifyHistory(Request $request, $productSlug = null)
     {
         $status = 200;
-        $msg = '';
+        $msg = 'Already exists';
 
-        if($productId == null) {
+        if($productSlug == null) {
             UserHistory::where('user_id', $request->user->id)->delete();
 
             $msg = 'History cleared';
         }
         else {
-            UserHistory::create([
-                'user_id' => $request->user->id ,
-                'product_id' => $productId
-            ]);
+            $product = Product::where('slug', $productSlug)->first();
 
-            $status = 201;
-            $msg = 'Product added to history';
+            if($product != null) {
+
+                $record = UserHistory::where('user_id', $request->user->id)->where('product_id', $product->id)->first();
+
+                if($record == null) {
+                    UserHistory::create([
+                        'user_id' => $request->user->id ,
+                        'product_id' => $product->id
+                    ]);
+
+                    $status = 201;
+                    $msg = 'Product added to history';
+                }
+            }
         }
 
         $result = SearchHelper::getUserMarkedItems($request->user->id, UserHistory::class, $request->query());

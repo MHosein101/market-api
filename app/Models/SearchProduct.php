@@ -6,6 +6,11 @@ use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\SoftDeletes;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 
+/**
+ * Public search view of products table
+ * 
+ * @author Hosein Marzban
+ */
 class SearchProduct extends Product
 {
     /**
@@ -20,17 +25,23 @@ class SearchProduct extends Product
      *
      * @var array
      */
-    protected $fillable = [ ];
+    protected $fillable = [];
     
     /**
      * The attributes that should be hidden for serialization.
      *
      * @var array
      */
-    protected $hidden = [ 
-        'product_id', 'category_id', 'product_price', 'product_available_count', 
-        'barcode', 'description', 'brand_id', 'created_at', 'updated_at', 'deleted_at'
-
+    protected $hidden = 
+    [ 
+        'product_id', 
+        'category_id', 
+        'product_price', 
+        'product_available_count', 
+        'barcode', 
+        'description', 
+        'brand_id', 
+        'created_at', 'updated_at', 'deleted_at'
     ];
 
     /**
@@ -38,8 +49,16 @@ class SearchProduct extends Product
      *
      * @var array
      */
-    protected $appends = [ 
-        'price_start', 'shops_count', 'is_available', 'image_url' , 'shop_name' , 'is_like', 'is_analytic', 'is_cart'
+    protected $appends =
+    [ 
+        'price_start', 
+        'shops_count', 
+        'is_available', 
+        'image_url' , 
+        'shop_name' , 
+        'is_like', 
+        'is_analytic', 
+        'is_cart'
     ];
 
     /**
@@ -47,8 +66,9 @@ class SearchProduct extends Product
      * 
      * @return boolean
      */
-    public function getIsAvailableAttribute() {
-        return ($this->product_available_count > 0);
+    public function getIsAvailableAttribute() 
+    {
+        return $this->product_available_count > 0;
     }
 
     /**
@@ -56,7 +76,8 @@ class SearchProduct extends Product
      * 
      * @return int
      */
-    public function getPriceStartAttribute() {
+    public function getPriceStartAttribute() 
+    {
         return $this->product_price ?? 0;
     }
 
@@ -65,7 +86,8 @@ class SearchProduct extends Product
      * 
      * @return int
      */
-    public function getShopsCountAttribute() {
+    public function getShopsCountAttribute() 
+    {
         return StoreProduct::where('product_id', $this->id)->count();
     }
 
@@ -75,11 +97,15 @@ class SearchProduct extends Product
      * 
      * @return string
      */
-    public function getShopNameAttribute() {
-        if($this->shops_count == 1) {
+    public function getShopNameAttribute() 
+    {
+        if( $this->shops_count == 1 ) 
+        {
             $sp = StoreProduct::where('product_id', $this->id)->first();
+
             return Store::find($sp->store_id)->name;
         }
+
         return '(Multiple)';
     }
 
@@ -88,14 +114,17 @@ class SearchProduct extends Product
      * 
      * @return boolean
      */
-    public function getIsLikeAttribute() {
-        if(request()->user != null) {
-            $record = UserFavorite::where('user_id', request()->user->id)
+    public function getIsLikeAttribute() 
+    {
+        if( request()->user != null ) 
+        {
+            $record = UserFavorite::currentUser()
             ->where('product_id', $this->id)
             ->first();
 
             return $record != null;
         }
+
         return false;
     }
 
@@ -104,7 +133,17 @@ class SearchProduct extends Product
      * 
      * @return boolean
      */
-    public function getIsAnalyticAttribute() {
+    public function getIsAnalyticAttribute() 
+    {
+        if( request()->user != null ) 
+        {
+            $record = UserFavorite::currentUser()
+            ->where('product_id', $this->id)
+            ->first();
+
+            return $record != null;
+        }
+
         return false;
     }
 
@@ -113,14 +152,18 @@ class SearchProduct extends Product
      * 
      * @return boolean
      */
-    public function getIsCartAttribute() {
-        if(request()->user != null) {
-            $record = UserCart::where('user_id', request()->user->id)
+    public function getIsCartAttribute() 
+    {
+        if( request()->user != null ) 
+        {
+            $record = UserFavorite::currentUser()
             ->where('base_product_id', $this->id)
             ->first();
 
             return $record != null;
         }
+
         return false;
     }
+    
 }

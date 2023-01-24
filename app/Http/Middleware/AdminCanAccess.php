@@ -22,12 +22,16 @@ class AdminCanAccess
      */
     public function handle(Request $request, Closure $next)
     {
-        if($request->user->account_type != UserAccountType::Admin)
-            return response()
-                ->json([ 
-                    'status' => 403 ,
+        if( $request->user->account_type != UserAccountType::Admin )
+        {
+            return 
+                response()
+                ->json(
+                [ 
+                    'status'  => 403 ,
                     'message' => 'You are not admin.' 
                 ], 403);
+        }
 
         return $next($request);
     }

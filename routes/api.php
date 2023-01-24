@@ -69,16 +69,18 @@ Route::group([ 'middleware' => ['user', 'valid-query'] , 'prefix' => 'user' ], f
         Route::get('analytics', 'getAnalytics');
         Route::put('analytics/{productId}', 'modifyAnalytics');
         Route::get('history', 'getHistory');
-        Route::put('history/{productId?}', 'modifyHistory');
+        Route::put('history/{productSlug?}', 'modifyHistory');
     });
     Route::group([ 'prefix' => 'cart' ], function () {
         Route::controller(UserCartController::class)->group(function() {
-            Route::get('/', 'getCartStores');
-            Route::get('/store/{storeId}', 'getCartItems');
-            Route::get('/items', 'getCartItemsSummary');
+            Route::get('/', 'getStoresSummary');
+            Route::get('/store/{storeId}', 'getStoreItems');
+            Route::get('/items', 'getCartSummary');
+
             Route::post('/{productId}', 'addProduct');
+
             Route::put('/store/{storeId}/product/{productId}/{type}/{isFactor?}', 'updateItemCount');
-            Route::delete('/store/{storeId}/product/{productId}', 'deleteItem');
+
             Route::delete('/store/{storeId}', 'deleteStoreItems');
         });
     });

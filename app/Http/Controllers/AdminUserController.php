@@ -132,8 +132,11 @@ class AdminUserController extends Controller
             'phone_number_secondary' => DataHelper::post('phone_number_secondary', '') ,
             'house_number' => DataHelper::post('house_number', '') ,
         ];
+            
+        // if($isCreate)
+        //     $userData['password'] = Hash::make($request->post('phone_number_primary'));
 
-        if($request->post('password') != null)
+        if (!$isCreate && $request->post('password') != null)
             $userData['password'] = Hash::make($request->post('password'));
 
         $userAddress = [

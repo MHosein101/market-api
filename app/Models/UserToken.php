@@ -6,9 +6,9 @@ use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\SoftDeletes;
 
 /**
- * Model to work with user_tokens table
+ * Users access tokens
  * 
- * @author Laravel
+ * @author Hosein Marzban
  */
 class UserToken extends Model
 {
@@ -22,7 +22,11 @@ class UserToken extends Model
      *
      * @var array
      */
-    protected $fillable = [
-        'token', 'expire', 'user_id'
+    protected $fillable = 
+    [
+        'token', 
+        'expire', 
+        'user_id'
     ];
+    
 }

@@ -27,25 +27,31 @@ class ValidateToken
         DataHelper::logRequest($request);
         
         $apiToken = $request->header('Authorization');
+
         $apiToken = str_replace('Bearer ', '', $apiToken);
 
         $tokenRecord = UserToken::where('token', $apiToken)->first();
         
         if($tokenRecord == null)
-            return response()
-            ->json([ 
-                'status' => 403 ,
-                'message' => 'Token is invalid.' 
-            ], 403);
+        {
+            return 
+                response()
+                ->json([ 
+                    'status'  => 403 ,
+                    'message' => 'Token is invalid.' 
+                ], 403);
+        }
 
-        if($tokenRecord->expire < time()) {
+        if( $tokenRecord->expire < time() ) 
+        {
             UserToken::where('token', $apiToken)->delete();
 
-            return response()
-            ->json([ 
-                'status' => 403 ,
-                'message' => 'Token has expired.' 
-            ], 403);
+            return 
+                response()
+                ->json([ 
+                    'status'  => 403 ,
+                    'message' => 'Token has expired.' 
+                ], 403);
         }
 
         $user = User::where('id', $tokenRecord->user_id)
@@ -56,7 +62,9 @@ class ValidateToken
         $request->merge(compact('user'));
 
         if(!$request->isMethod('get'))
+        {
             DataHelper::logRequest($request);
+        }
         
         return $next($request);
     }

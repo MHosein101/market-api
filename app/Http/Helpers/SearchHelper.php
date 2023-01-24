@@ -9,6 +9,9 @@ use App\Models\Product;
 use App\Models\SearchProduct;
 use App\Models\ProductCategory;
 use App\Models\UserAccountType;
+use App\Models\UserAnalytic;
+use App\Models\UserMarkedProduct;
+use App\Models\UserMarkedProductAnalytic;
 
 class SearchHelper
 {
@@ -25,7 +28,12 @@ class SearchHelper
         $params = $defaults;
 
         foreach($defaults as $key => $val)
-            $params[$key] = isset($query[$key]) ? $query[$key] : $val;
+        {
+            $params[$key] = 
+            isset($query[$key]) 
+            ? $query[$key] 
+            : $val;
+        }
 
         return $params;
     }
@@ -46,53 +54,74 @@ class SearchHelper
      */ 
     public static function dataWithFilters($queryString, $class, $select = '*', $filterParams = [], $filterFunction = null) 
     {
-        $defaultParams = [
-            'page' => 1 ,
+        $defaultParams = 
+        [
+            'page'  => 1 ,
             'limit' => 20 ,
             'state' => 'all' , // all active trashed
             'order' => 'desc' // asc desc null
         ];
 
-        foreach($filterParams as $k => $v)
+        foreach($filterParams as $k => $v) 
+        {
             $defaultParams[$k] = $v;
+        }
 
         $query = SearchHelper::configQueryParams($queryString, $defaultParams);
 
-        $qbuilder = ($select == null) ? $class : $class::selectRaw($select);
+        $qbuilder = $select == null
+        ? $class 
+        : $class::selectRaw($select);
 
-        switch( $query['state'] ) {
+        switch( $query['state'] ) 
+        {
             case 'all': 
-                $qbuilder = $qbuilder->withTrashed(); break;
+
+                $qbuilder = $qbuilder->withTrashed(); 
+                break;
+
             case 'trashed': 
-                $qbuilder = $qbuilder->onlyTrashed(); break;
+
+                $qbuilder = $qbuilder->onlyTrashed(); 
+                break;
         }
 
-        if($filterFunction != null)
+        if( $filterFunction != null ) 
+        {
             $qbuilder = SearchHelper::$filterFunction(clone $qbuilder, $query);
+        }
 
         $count = clone $qbuilder;
+
         $count = count( $count->get() );
 
         $lastPage = ceil( $count / $query['limit'] );
 
         $take = $query["limit"];
+
         $skip = ( $query["page"] - 1 ) * $query["limit"];
 
         if($query['order'] != null)
+        {
             $qbuilder = $qbuilder->orderBy('created_at', $query['order']);
+        }
 
-        $data = $qbuilder->skip($skip)->take($take)->get();
+        $data = $qbuilder
+        ->skip($skip)
+        ->take($take)
+        ->get();
 
-        return [
-            'data' => $data ,
+        return 
+        [
+            'data'  => $data ,
             'count' => [
                 'current' => count($data) ,
-                'total' => $count ,
-                'limit' => (int)$query['limit']
+                'total'   => $count ,
+                'limit'   => (int)$query['limit']
             ] ,
             'pagination' => [
                 'current' => (int)$query['page'] ,
-                'last' => $lastPage
+                'last'    => $lastPage
             ]
         ];
     }
@@ -107,11 +136,13 @@ class SearchHelper
      */ 
     public static function filterUsers($qbuilder, $query) 
     {
-        if( $query['number'] != null ) {
-
+        if( $query['number'] != null ) 
+        {
             $n = $query['number'];
+
             $qbuilder = $qbuilder
-            ->where(function($qb) use ($query, $n) {
+            ->where(function($qb) use ($query, $n) 
+            {
                 return $qb
                     ->where('phone_number_primary','LIKE', "%$n%")
                     ->orWhere('phone_number_secondary','LIKE', "%$n%")
@@ -119,9 +150,12 @@ class SearchHelper
             });
         }
 
-        foreach(['full_name', 'national_code'] as $field) {
+        foreach(['full_name', 'national_code'] as $field) 
+        {
             if( $query[$field] != null )
+            {
                 $qbuilder = $qbuilder->where($field,'LIKE', "%{$query[$field]}%");
+            }
         }
 
         return $qbuilder;
@@ -137,8 +171,10 @@ class SearchHelper
      */ 
     public static function filterCategories($qbuilder, $query) 
     {
-        if( $query['name'] != null )
+        if( $query['name'] != null ) 
+        {
             $qbuilder = $qbuilder->where('name', 'LIKE', "%{$query['name']}%");
+        }
 
         return $qbuilder;
     }
@@ -153,17 +189,21 @@ class SearchHelper
      */ 
     public static function filterBrands($qbuilder, $query) 
     {
-        if( $query['name'] != null ) {
+        if( $query['name'] != null ) 
+        {
             $qbuilder = $qbuilder
-            ->where(function($qb) use ($query) {
+            ->where(function($qb) use ($query) 
+            {
                 return $qb
                     ->where('name','LIKE', "%{$query['name']}%")
                     ->orWhere('english_name','LIKE', "%{$query['name']}%");
             });
         }
             
-        if( $query['company'] != null )
+        if( $query['company'] != null ) 
+        {
             $qbuilder = $qbuilder->where('company','LIKE', "%{$query['company']}%");
+        }
 
         return $qbuilder;
     }
@@ -178,25 +218,32 @@ class SearchHelper
      */ 
     public static function filterProducts($qbuilder, $query) 
     {
-        if($query['category_id'] != null) {
-            
+        if( $query['category_id'] != null )
+        {
             $productCategories = ProductCategory::selectRaw('product_id, category_id')->where('category_id', $query['category_id']);
 
-            $qbuilder = $qbuilder->leftJoinSub($productCategories, 'products_categories_ids', function ($join) {
+            $qbuilder = $qbuilder->leftJoinSub($productCategories, 'products_categories_ids', function ($join) 
+            {
                 $join->on('products.id', 'products_categories_ids.product_id');
             });
 
             $qbuilder = $qbuilder->where('category_id', $query['category_id']);
         }
 
-        foreach(['title', 'barcode'] as $field) {
+        foreach(['title', 'barcode'] as $field) 
+        {
             if( $query[$field] != null )
+            {
                 $qbuilder = $qbuilder->where("products.$field",'LIKE', "%{$query[$field]}%");
+            }
         }
         
-        foreach(['brand_id'] as $field) {
+        foreach(['brand_id'] as $field)
+        {
             if( $query[$field] != null )
+            {
                 $qbuilder = $qbuilder->where("products.$field", $query[$field]);
+            }
         }
 
         return $qbuilder;
@@ -213,13 +260,17 @@ class SearchHelper
     public static function filterStores($qbuilder, $query) 
     {
         if($query['state'] == 'pending')
+        {
             $qbuilder = $qbuilder->withTrashed()->where('admin_confirmed', -1);
+        }
 
-        if( $query['number'] != null ) {
-
+        if( $query['number'] != null ) 
+        {
             $n = $query['number'];
+
             $qbuilder = $qbuilder
-            ->where(function($qb) use ($query, $n) {
+            ->where(function($qb) use ($query, $n) 
+            {
                 return $qb
                     ->where('owner_phone_number','LIKE', "%$n%")
                     ->orWhere('second_phone_number','LIKE', "%$n%")
@@ -228,22 +279,25 @@ class SearchHelper
             });
         }
 
-        foreach(['name', 'economic_code', 'province', 'city'] as $field) {
-            if( $query[$field] != null )
+        foreach(['name', 'economic_code', 'province', 'city'] as $field) 
+        {
+            if( $query[$field] != null ) 
+            {
                 $qbuilder = $qbuilder->where($field,'LIKE', "%{$query[$field]}%");
+            }
         }
 
-        if($query['national_code'] != null) {
-            
+        if( $query['national_code'] != null ) 
+        {
             $usersNationalCodes = User::selectRaw('users.id as user_id, users.national_code as owner_national_code');
 
-            $qbuilder = $qbuilder->leftJoinSub($usersNationalCodes, 'users_national_codes', function ($join) {
+            $qbuilder = $qbuilder->leftJoinSub($usersNationalCodes, 'users_national_codes', function ($join) 
+            {
                 $join->on('stores.user_id', 'users_national_codes.user_id');
             });
 
             $qbuilder = $qbuilder->where('owner_national_code', 'LIKE', "%{$query['national_code']}%");
         }
-
 
         return $qbuilder;
     }
@@ -261,9 +315,17 @@ class SearchHelper
     {
         $markedProducts = $class::selectRaw('user_id, product_id, created_at as marked_at');
 
-        $products = SearchProduct::selectRaw('products.*');
+        if( $class == UserAnalytic::class ) 
+        {
+            $products = UserMarkedProductAnalytic::selectRaw('products.*');
+        }
+        else 
+        {
+            $products = UserMarkedProduct::selectRaw('products.*');
+        }
         
-        $products = $products->leftJoinSub($markedProducts, 'marked_items', function ($join) {
+        $products = $products->leftJoinSub($markedProducts, 'marked_items', function ($join) 
+        {
             $join->on('products.id', 'marked_items.product_id');
         });
 
@@ -296,51 +358,76 @@ class SearchHelper
     public static function filterSearchProducts($qbuilder, $query) 
     {
         $query['title'] = $query['q'];
+
         $query['barcode'] = null;
         
-        $renameing = [
+        $renameing = 
+        [
             'price_from' => 'fromPrice' ,
-            'price_to' => 'toPrice' ,
-            'limit' => 'perPage' ,
+            'price_to'   => 'toPrice' ,
+            'limit'      => 'perPage' ,
         ];
-        foreach($renameing as $new => $old)
-            if($query[$old])
-                $query[$new] = $query[$old];
 
-        $dataChecks = [
+        foreach($renameing as $new => $old) 
+        {
+            if($query[$old])
+            {
+                $query[$new] = $query[$old];
+            }
+        }
+
+        $dataChecks = 
+        [
             'brand' => \App\Models\Brand::class ,
             'category' => \App\Models\Category::class ,
         ];
-        foreach($dataChecks as $key => $class) {
+
+        foreach($dataChecks as $key => $class) 
+        {
             $query[ $key . '_id' ] = null;
             
-            if($query[$key] != null) {
+            if($query[$key] != null) 
+            {
                 $record = $class::where('slug', $query[$key])->first();
+
                 $query[ $key . '_id' ] = $record ? $record->id : null;
             }
         }
 
         $qbuilder = SearchHelper::filterProducts(clone $qbuilder, $query);
 
-        switch($query['sort']) {
+        switch($query['sort']) 
+        {
             case 'dateRecent': 
-            case 'time_desc': $qbuilder = $qbuilder->orderBy('created_at', 'desc');
+            case 'time_desc': 
+                
+                $qbuilder = $qbuilder->orderBy('created_at', 'desc');
                 break;
+
             case 'priceMin': 
-            case 'price_min': $qbuilder = $qbuilder->orderBy('product_price', 'asc');
+            case 'price_min': 
+                
+                $qbuilder = $qbuilder->orderBy('product_price', 'asc');
                 break;
+
             case 'priceMax': 
-            case 'price_max': $qbuilder = $qbuilder->orderBy('product_price', 'desc');
+            case 'price_max': 
+                
+                $qbuilder = $qbuilder->orderBy('product_price', 'desc');
                 break;
         }
 
-        if( $query['price_from'] != null && $query['price_to'] != null ) {
-            $qbuilder = $qbuilder->where('product_price', '>=', $query['price_from'])
-                                 ->where('product_price', '<=', $query['price_to']);
+        if( $query['price_from'] != null && $query['price_to'] != null ) 
+        {
+            $qbuilder = $qbuilder
+            ->where('product_price', '>=', $query['price_from'])
+            ->where('product_price', '<=', $query['price_to']);
         }
 
         if( $query['available'] == '1' || $query['available'] == 'true' )
+        {
             $qbuilder = $qbuilder->where('product_available_count', '>', 0);
+        }
 
         return $qbuilder;
     }

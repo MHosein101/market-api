@@ -8,7 +8,8 @@ namespace App\Models;
  * 
  * @author Hosein marzban
  */
-class StoreProductDiscountType {
+class StoreProductDiscountType 
+{
 
     const Count = 'count';
 

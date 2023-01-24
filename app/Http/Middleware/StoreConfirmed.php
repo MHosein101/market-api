@@ -19,12 +19,14 @@ class StoreConfirmed
     {
         $pending = Store::find($request->user->store_id)->is_pending;
 
-        if($pending) {
-            return response()
-            ->json([
-                'status' => 403 ,
-                'message' => 'Store need to be confirmed by admin.' 
-            ], 403);
+        if($pending) 
+        {
+            return 
+                response()
+                ->json([
+                    'status'  => 403 ,
+                    'message' => 'Store need to be confirmed by admin.' 
+                ], 403);
         }
 
         return $next($request);

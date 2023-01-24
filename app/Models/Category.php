@@ -8,7 +8,7 @@ use Illuminate\Database\Eloquent\SoftDeletes;
 /**
  * Model to work with categories table
  * 
- * @author Laravel
+ * @author Hosein Marzban
  */
 class Category extends Model
 {
@@ -18,35 +18,41 @@ class Category extends Model
     use SoftDeletes;
     
     /**
-     * The attributes that are mass assignable.
+     * The attributes that aren't mass assignable. 
+     * If leave empty, all attributes will be mass assignable.
      *
      * @var array
      */
-    protected $fillable = [
-        'name', 'slug', 'parent_id'
-    ];
+    protected $guarded = [];
     
     /**
      * The attributes that should be hidden for serialization.
      *
      * @var array
      */
-    protected $hidden = [ 'created_at', 'updated_at', 'deleted_at' ];
+    protected $hidden = 
+    [ 
+        'created_at', 'updated_at', 'deleted_at' 
+    ];
 
     /**
      * New attributes that should be appended to model
      *
      * @var array
      */
-    protected $appends = [ 'is_show' ];
+    protected $appends = 
+    [ 
+        'is_show' 
+    ];
 
     /**
      * Compute deleted_at column as boolean value
      * 
      * @return boolean
      */
-    public function getIsShowAttribute() {
-        return ($this->deleted_at == null);
+    public function getIsShowAttribute() 
+    {
+        return $this->deleted_at == null;
     }
     
 }

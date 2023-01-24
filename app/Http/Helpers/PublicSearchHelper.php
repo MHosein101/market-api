@@ -25,69 +25,109 @@ class PublicSearchHelper
     public static function categoryUntilTopParent($category)
     {
         $c = 0;
+
         $catsId = [ $category->id ];
+
         $currentId = $category->id;
 
-        while($c != 4) {
-            if($category->parent_id == null) break;
+        while( $c != 4 ) 
+        {
+            if( $category->parent_id == null )
+            {
+                 break;
+            }
 
             $category = Category::find($category->parent_id);
+
             $catsId[] = $category->id;
+
             $c++;
         }
 
         $catsId = array_reverse($catsId);
-        $categories = [ 'parent' => null , 'sub1' => null , 'sub2' => null , 'sub3' => null, 'sub4' => null ];
+
+        $categories = 
+        [ 
+            'parent' => null , 
+            'sub1'  => null , 
+            'sub2'  => null , 
+            'sub3'  => null, 
+            'sub4'  => null 
+        ];
 
         $i = 0;
+
         $lastCatId = null;
+
         $keys = array_keys($categories);
         
-        $list = [ [ 'type' => 'unavailable', 'title' => 'زیر دسته ای وجود ندارد' ] ];
+        $list = [ 
+            [ 
+                'type'  => 'unavailable', 
+                'title' => 'زیر دسته ای وجود ندارد' 
+            ] 
+        ];
 
-        foreach($keys as $k) {
-
-            if( isset($catsId[$i]) ) {
+        foreach($keys as $k) 
+        {
+            if( isset($catsId[$i]) ) 
+            {
                 $category = Category::find($catsId[$i]);
-                $categories[$k] = [ 
-                    'type' => 'category' , 
-                    'title' => $category->name , 
-                    'slug' => $category->slug ,
+
+                $categories[$k] = 
+                [ 
+                    'type'       => 'category' , 
+                    'title'      => $category->name , 
+                    'slug'       => $category->slug ,
                     'is_current' => $currentId == $category->id ,
-                    'is_list' => false
+                    'is_list'    => false
                 ];
+
                 $lastCatId = $category->id;
+
                 $i++;
             }
-            else {
+            else 
+            {
                 $k = $keys[$i-1];
+
                 $subs = Category::where('parent_id', $lastCatId)->get();
 
-                if(count($subs) == 0 && $i != 1) {
+                if( count($subs) == 0 && $i != 1 ) 
+                {
                     $categories[$k] = null;
+
                     $k = $keys[$i-2];
+
                     $lastCatId = Category::find($lastCatId)->parent_id;
+
                     $subs = Category::where('parent_id', $lastCatId)->get();
+
                     $list = [];
                 }
 
                 $categories[$k]['is_list'] = true;
 
-                foreach($subs as $s) {
-                    $list[] = [
-                        'type' => 'category' , 
-                        'title' => $s->name , 
-                        'slug' => $s->slug ,
+                foreach($subs as $s) 
+                {
+                    $list[] = 
+                    [
+                        'type'       => 'category' , 
+                        'title'      => $s->name , 
+                        'slug'       => $s->slug ,
                         'is_current' => $currentId == $s->id ,
                     ];
                 }
+
                 break;
             }
+
         }
 
         unset($categories['sub4']);
 
-        return [ 
+        return 
+        [ 
             'data' => $categories , 
             'list' => $list 
         ];
@@ -116,19 +156,25 @@ class PublicSearchHelper
     public static function categoryTypeTitle($queryCategorySlug)
     {
         if($queryCategorySlug == null)
+        {
             return 'دسته های پیشنهادی';
+        }
         
         $category = Category::where('slug', $queryCategorySlug)->first();
 
         if($category == null)
+        {
             return 'دسته های پیشنهادی';
+        }
 
         $subs = Category::where('parent_id', $category->id)->count();
 
-        if($subs > 0 || $category->parent_id == null)
+        if( $subs > 0 || $category->parent_id == null )
+        {
             return 'دسته های دقیق تر';
-        else
-            return 'دسته های مشابه';
+        }
+        else { return 'دسته های مشابه'; }
+
     }
 
     /**
@@ -142,28 +188,43 @@ class PublicSearchHelper
      */ 
     public static function relatedCategories($queryCategoryName, $qbuilder, $q)
     {
-        if($queryCategoryName) {
+        if( $queryCategoryName ) 
+        {
             $category = Category::where('slug', $queryCategoryName)->first();
-            if($category)
+
+            if( $category != null ) 
+            {
                 return PublicSearchHelper::categoryUntilTopParent($category);
+            }
+
         }
-        else if ($q) {
+
+        else if ($q) 
+        {
             $productsIds = $qbuilder->selectRaw('id')->where('products.title', 'LIKE', "%$q%");
 
             $categoryIds = ProductCategory::selectRaw('category_id')
             ->whereIn('product_id', $productsIds)
             ->distinct()
-            ->take(50)->inRandomOrder()->get();
+            ->take(50)
+            ->inRandomOrder()
+            ->get();
 
             $categories = [];
-            foreach($categoryIds as $c) {
+
+            foreach($categoryIds as $c) 
+            {
                 $cat =  Category::find($c->category_id);
+
                 if($cat)
+                {
                     $categories[] = $cat;
+                }
             }
                 
             return $categories;
         }
+
         return [];
     }
 
@@ -177,15 +238,20 @@ class PublicSearchHelper
     public static function categoryBreadCrump($category)
     {
         $path = [];
-        $path[] = [ 
-            'type' => 'category' , 
+
+        $path[] = 
+        [ 
+            'type'  => 'category' , 
             'title' => $category->name
         ];
 
-        while($category->parent_id != null) {
+        while( $category->parent_id != null ) 
+        {
             $category = Category::find($category->parent_id);
-            $path[] = [ 
-                'type' => 'category' , 
+
+            $path[] = 
+            [ 
+                'type'  => 'category' , 
                 'title' => $category->name
             ];
         }
@@ -203,16 +269,24 @@ class PublicSearchHelper
      */ 
     public static function relatedBrands($qbuilder, $q)
     {
-        if($q == null)
+        if( $q == null )
+        {
             return Brand::get();
+        }
             
-        $brandsIds = $qbuilder->selectRaw('brand_id as id')
+        $brandsIds = $qbuilder
+        ->selectRaw('brand_id as id')
         ->where('products.title', 'LIKE', "%$q%")
-        ->distinct()->inRandomOrder()->get();
+        ->distinct()
+        ->inRandomOrder()
+        ->get();
 
         $brands = [];
-        foreach($brandsIds as $b) 
+
+        foreach($brandsIds as $b)
+        {
             $brands[] = Brand::find($b->id);
+        }
 
         return $brands;
     }
@@ -229,7 +303,8 @@ class PublicSearchHelper
     {
         $stores = Store::selectRaw('id, name as title, province, city');
 
-        $offers = PublicStoreProduct::leftJoinSub($stores, 'stores', function ($join) {
+        $offers = PublicStoreProduct::leftJoinSub($stores, 'stores', function ($join) 
+        {
             $join->on('store_products.store_id', 'stores.id');
         });
 
@@ -239,22 +314,31 @@ class PublicSearchHelper
         ->orderBy('is_available', 'desc')
         ->orderBy('store_price', 'asc');
 
-        if($filters != null) {
+        if($filters != null) 
+        {
             extract($filters); // $provinces, $cities, $ignores
 
-            $offers->where(function($query) use ($provinces, $cities, $ignores) {
-                if($provinces != null)
+            $offers->where(function($query) use ($provinces, $cities, $ignores) 
+            {
+                if( $provinces != null )
+                {
                     $query->whereIn('stores.province', $provinces);
+                }
 
-                if($cities != null)
+                if( $cities != null )
+                {
                     $query->orWhereIn('stores.city', $cities);
+                }
 
-                if($ignores != null)
+                if( $ignores != null )
+                {
                     $query->whereNotIn('stores.id', $ignores);
+                }
             });
         }
         
         return $offers->get();
+
     }
 
 

@@ -9,7 +9,7 @@ use Illuminate\Database\Eloquent\SoftDeletes;
 /**
  * Model to work with products table
  * 
- * @author Laravel
+ * @author Hosein Marzban
  */
 class Product extends Model
 {
@@ -19,21 +19,22 @@ class Product extends Model
     use SoftDeletes;
 
     /**
-     * The attributes that are mass assignable.
+     * The attributes that aren't mass assignable. 
+     * If leave empty, all attributes will be mass assignable.
      *
      * @var array
      */
-    protected $fillable = [
-        'title', 'slug', 'barcode', 'description', 'brand_id'
-    ];
+    protected $guarded = [];
     
     /**
      * The attributes that should be hidden for serialization.
      *
      * @var array
      */
-    protected $hidden = [ 
-        'brand_id', 'created_at', 'updated_at', 'deleted_at' 
+    protected $hidden = 
+    [ 
+        'brand_id', 
+        'created_at', 'updated_at', 'deleted_at' 
     ];
 
     /**
@@ -41,8 +42,15 @@ class Product extends Model
      *
      * @var array
      */
-    protected $appends = [ 
-        'brand', 'categories', 'images', 'is_show', 'is_created', 'is_image_url', 'image_url' 
+    protected $appends = 
+    [ 
+        'brand', 
+        'categories', 
+        'images', 
+        'is_show', 
+        'is_created', 
+        'is_image_url', 
+        'image_url' 
     ];
 
     /**
@@ -50,13 +58,18 @@ class Product extends Model
      * 
      * @return array
      */
-    public function getBrandAttribute() {
+    public function getBrandAttribute() 
+    {
         $b = Brand::find($this->brand_id);
 
-        if($b == null) return [];
+        if( $b == null )
+        {
+            return [];
+        }
 
-        return [
-            'id' => $b->id ,
+        return 
+        [
+            'id'   => $b->id ,
             'name' => $b->name ,
         ];
     }
@@ -66,15 +79,19 @@ class Product extends Model
      * 
      * @return array
      */
-    public function getCategoriesAttribute() {
+    public function getCategoriesAttribute() 
+    {
         $catIDs = ProductCategory::where('product_id', $this->id)->get();
+
         $names = [];
 
-        foreach($catIDs as $c) {
+        foreach($catIDs as $c) 
+        {
             $category = Category::withTrashed()->find($c->category_id);
 
-            $names[] = [
-                'id' => $category->id ,
+            $names[] = 
+            [
+                'id'  => $category->id ,
                 'name' => $category->name
             ];
         }
@@ -89,8 +106,10 @@ class Product extends Model
      * 
      * @return array
      */
-    public function getImagesAttribute() {
+    public function getImagesAttribute() 
+    {
         $images = ProductImage::where('product_id', $this->id)->orderBy('created_at')->get();
+
         return $images ?? [];
     }
 
@@ -99,8 +118,9 @@ class Product extends Model
      * 
      * @return boolean
      */
-    public function getIsShowAttribute() {
-        return ($this->deleted_at == null);
+    public function getIsShowAttribute() 
+    {
+        return $this->deleted_at == null;
     }
 
     /**
@@ -109,9 +129,15 @@ class Product extends Model
      * 
      * @return string
      */
-    public function getImageUrlAttribute() {
-        $image = ProductImage::where('product_id', $this->id)->where('is_main', true)->first();
-        return ($image == null) ? request()->getSchemeAndHttpHost() . '/default.jpg' : $image->url;
+    public function getImageUrlAttribute() 
+    {
+        $image = ProductImage::where('product_id', $this->id)
+        ->where('is_main', true)
+        ->first();
+
+        return $image == null 
+        ? request()->getSchemeAndHttpHost() . '/default.jpg' 
+        : $image->url;
     }
 
     /**
@@ -119,9 +145,11 @@ class Product extends Model
      * 
      * @return boolean
      */
-    public function getIsImageUrlAttribute() {
+    public function getIsImageUrlAttribute() 
+    {
         $images = ProductImage::where('product_id', $this->id)->get();
-        return (count($images) > 0);
+
+        return count($images) > 0;
     }
 
     /**
@@ -129,12 +157,14 @@ class Product extends Model
      * 
      * @return null|boolean
      */
-    public function getIsCreatedAttribute() {
-        if(request()->user->account_type == UserAccountType::Store) {
+    public function getIsCreatedAttribute() 
+    {
+        if( request()->user->account_type == UserAccountType::Store ) 
+        {
             $check = StoreProduct::withTrashed()
-                                 ->where('store_id', request()->user->store_id)
-                                 ->where('product_id', $this->id)
-                                 ->first();
+            ->where('store_id', request()->user->store_id)
+            ->where('product_id', $this->id)
+            ->first();
             
             return $check != null;
         }

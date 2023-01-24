@@ -6,6 +6,11 @@ use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\SoftDeletes;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 
+/**
+ * Public view of store_products table data
+ * 
+ * @author Hosein Marzban
+ */
 class PublicStoreProduct extends StoreProduct
 {
     /**
@@ -25,21 +30,29 @@ class PublicStoreProduct extends StoreProduct
      *
      * @var array
      */
-    protected $fillable = [ ];
+    protected $fillable = [];
 
     /**
      * The attributes that should be hidden for serialization.
      *
      * @var array
      */
-    protected $hidden = [
-        'id', // 'is_available' ,
-        'production_date' , 'expire_date' ,
-        'production_price' , 'consumer_price' ,
-        'store_price' , 'store_price_1' , 'store_price_2' ,
+    protected $hidden = 
+    [
+        'id', 
+        // 'is_available' ,
+        'production_date' , 
+        'expire_date' ,
+        'production_price' , 
+        'consumer_price' ,
+        'store_price' , 
+        'store_price_1' , 
+        'store_price_2' ,
         'price_update_time' ,
-        'per_unit' , 'warehouse_count' ,
-        'delivery_description' , 'store_note' ,
+        'per_unit' ,
+        'warehouse_count' ,
+        'delivery_description' , 
+        'store_note' ,
         // 'cash_payment_discount' , 
         'commission' ,
         'admin_confirmed' ,
@@ -53,14 +66,19 @@ class PublicStoreProduct extends StoreProduct
      *
      * @var array
      */
-    protected $appends = [ 'discounts', 'cart' ];
+    protected $appends = 
+    [ 
+        'discounts', 
+        'cart' 
+    ];
 
     /**
      * Casts field value to specific type
      *
      * @var array
      */
-    protected $casts = [
+    protected $casts = 
+    [
         'is_available' => 'boolean'
     ];
     
@@ -69,31 +87,37 @@ class PublicStoreProduct extends StoreProduct
      * 
      * @return StoreProductDiscount[]
      */
-    public function getDiscountsAttribute() {
+    public function getDiscountsAttribute() 
+    {
         return StoreProductDiscount::where('product_id', $this->product_id)->get();
     }
 
     /**
-     * Return if product is in cart
+     * Return count of user cart items
      * 
      * @return boolean
      */
-    public function getCartAttribute() {
+    public function getCartAttribute() 
+    {
         $isCart = false;
+
         $count = 0;
 
-        if(request()->user != null) {
-            $record = UserCart::where('user_id', request()->user->id)
+        if( request()->user != null ) 
+        {
+            $record = UserCart::currentUser()
             ->where('product_id', $this->product_id)
             ->first();
 
             $isCart = $record != null;
+
             $count = $isCart ? $record->count : 0;
         }
         
-        return [
+        return 
+        [
             'is_cart' => $isCart ,
-            'count' => $count ,
+            'count'   => $count ,
         ];
     }
 

@@ -18,16 +18,22 @@ class PublicProductValidate
     public function handle(Request $request, Closure $next)
     {
         $productSlug = $request->route('productSlug');
+
         $product = PublicProduct::where('slug', $productSlug)->first();
         
         if($product == null)
-            return response()
-            ->json([ 
-                'status' => 404 ,
-                'message' => 'Product not found.' 
-            ], 404);
+        {
+            return 
+                response()
+                ->json(
+                [ 
+                    'status'  => 404 ,
+                    'message' => 'Product not found.' 
+                ], 404);
+        }
         
         $request->merge(compact('product'));
+
         return $next($request);
     }
 }

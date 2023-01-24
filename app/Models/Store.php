@@ -9,7 +9,7 @@ use Illuminate\Database\Eloquent\SoftDeletes;
 /**
  * Model to work with stores table
  * 
- * @author Laravel
+ * @author Hosein Marzban
  */
 class Store extends Model
 {
@@ -19,60 +19,50 @@ class Store extends Model
     use SoftDeletes;
     
     /**
-     * The attributes that are mass assignable.
+     * The attributes that aren't mass assignable. 
+     * If leave empty, all attributes will be mass assignable.
      *
      * @var array
      */
-    protected $fillable = [
-        'name' ,
-        'slug' ,
-        'economic_code' ,
-
-        'owner_full_name' ,
-        'owner_phone_number' ,
-        'second_phone_number' ,
-
-        'province' ,
-        'city' ,
-
-        'office_address' ,
-        'office_number' ,
-
-        'warehouse_address' ,
-        'warehouse_number' ,
-
-        'minimum_shopping_count' ,
-        'minimum_shopping_unit' ,
-
-        'bank_name' ,
-        'bank_code' ,
-        'bank_card_number' ,
-        'bank_sheba_number' ,
-
-        'admin_confirmed' ,
-    ];
+    protected $guarded = [];
     
     /**
      * The attributes that should be hidden for serialization.
      *
      * @var array
      */
-    protected $hidden = [ 'admin_confirmed', 'created_at', 'updated_at', 'deleted_at' ];
+    protected $hidden = 
+    [ 
+        'admin_confirmed', 
+        'created_at', 'updated_at', 'deleted_at' 
+    ];
 
     /**
      * New attributes that should be appended to model
      *
      * @var array
      */
-    protected $appends = [ 'owner_national_code', 'is_pending', 'is_license_image', 'is_logo_image', 'is_store_banner_image', 'is_show' ];
+    protected $appends = 
+    [ 
+        'owner_national_code', 
+        'is_pending', 
+        'is_license_image', 
+        'is_logo_image', 
+        'is_store_banner_image', 
+        'is_show' 
+    ];
 
     /**
      * Return owner national code from users table
      * 
      * @return string
      */
-    public function getOwnerNationalCodeAttribute() {
-        return User::where('store_id', $this->id)->get()->first()->national_code;
+    public function getOwnerNationalCodeAttribute() 
+    {
+        return User::withTrashed()
+        ->where('store_id', $this->id)
+        ->first()
+        ->national_code;
     }
 
     /**
@@ -80,8 +70,9 @@ class Store extends Model
      * 
      * @return boolean
      */
-    public function getIsPendingAttribute() {
-        return ($this->admin_confirmed == -1);
+    public function getIsPendingAttribute() 
+    {
+        return $this->admin_confirmed == -1;
     }
 
     /**
@@ -89,8 +80,11 @@ class Store extends Model
      * 
      * @return string
      */
-    public function getLogoImageAttribute($value) {
-        return $value != '' ? $value : request()->getSchemeAndHttpHost() . '/default.jpg';
+    public function getLogoImageAttribute($value) 
+    {
+        return $value != '' 
+        ? $value 
+        : request()->getSchemeAndHttpHost() . '/default.jpg';
     }
 
     /**
@@ -98,8 +92,11 @@ class Store extends Model
      * 
      * @return string
      */
-    public function getLicenseImageAttribute($value) {
-        return $value != '' ? $value : request()->getSchemeAndHttpHost() . '/default.jpg';
+    public function getLicenseImageAttribute($value) 
+    {
+        return $value != '' 
+        ? $value 
+        : request()->getSchemeAndHttpHost() . '/default.jpg';
     }
 
     /**
@@ -107,8 +104,11 @@ class Store extends Model
      * 
      * @return string
      */
-    public function getBannerImageAttribute($value) {
-        return $value != '' ? $value : request()->getSchemeAndHttpHost() . '/default.jpg';
+    public function getBannerImageAttribute($value) 
+    {
+        return $value != '' 
+        ? $value 
+        : request()->getSchemeAndHttpHost() . '/default.jpg';
     }
 
     /**
@@ -116,7 +116,8 @@ class Store extends Model
      * 
      * @return boolean
      */
-    public function getIsLogoImageAttribute() {
+    public function getIsLogoImageAttribute() 
+    {
         return !Str::contains($this->logo_image, 'default.jpg');
     }
 
@@ -125,7 +126,8 @@ class Store extends Model
      * 
      * @return boolean
      */
-    public function getIsLicenseImageAttribute() {
+    public function getIsLicenseImageAttribute() 
+    {
         return !Str::contains($this->license_image, 'default.jpg');
     }
 
@@ -134,7 +136,8 @@ class Store extends Model
      * 
      * @return boolean
      */
-    public function getIsStoreBannerImageAttribute() {
+    public function getIsStoreBannerImageAttribute() 
+    {
         return !Str::contains($this->banner_image, 'default.jpg');
     }
     
@@ -143,8 +146,9 @@ class Store extends Model
      * 
      * @return boolean
      */
-    public function getIsShowAttribute() {
-        return ($this->deleted_at == null);
+    public function getIsShowAttribute() 
+    {
+        return $this->deleted_at == null;
     }
 
     /**
@@ -152,7 +156,8 @@ class Store extends Model
      * 
      * @return boolean
      */
-    public function getIsPasswordAttribute() {
+    public function getIsPasswordAttribute() 
+    {
         return User::find(request()->user->id)->is_password;
     }
 

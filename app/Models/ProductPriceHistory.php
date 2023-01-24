@@ -4,19 +4,21 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\SoftDeletes;
+use Illuminate\Database\Eloquent\Factories\HasFactory;
 
 /**
- * Model to work with product_images table
+ * Model for product prices changes
  * 
  * @author Hosein Marzban
  */
-class ProductImage extends Model
+class ProductPriceHistory extends Model
 {
+    
     /**
      * Adds a deleted_at column to model's table
      */
     use SoftDeletes;
-    
+
     /**
      * The attributes that aren't mass assignable. 
      * If leave empty, all attributes will be mass assignable.
@@ -26,23 +28,11 @@ class ProductImage extends Model
     protected $guarded = [];
 
     /**
-     * Casts field value to specific type
-     *
-     * @var array
-     */
-    protected $casts = 
-    [
-        'is_main' => 'boolean'
-    ];
-    
-    /**
      * The attributes that should be hidden for serialization.
      *
      * @var array
      */
-    protected $hidden = 
-    [ 
-        'product_id', 
+    protected $hidden = [ 
         'created_at', 'updated_at', 'deleted_at' 
     ];
 
@@ -51,19 +41,5 @@ class ProductImage extends Model
      *
      * @var array
      */
-    protected $appends = 
-    [ 
-        'is_uploaded' 
-    ];
-    
-    /**
-     * Return true for client to use
-     * 
-     * @return boolean
-     */
-    public function getIsUploadedAttribute() 
-    {
-        return true;
-    }
-
+    protected $appends = [];
 }

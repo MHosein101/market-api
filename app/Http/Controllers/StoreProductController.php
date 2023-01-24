@@ -157,6 +157,7 @@ class StoreProductController extends Controller
                 || $product->store_price != $data['store_price']
                 || $product->store_price_1 != $data['store_price_1']
                 || $product->store_price_2 != $data['store_price_2'] ) {
+                    
                     $data['price_update_time'] = time();
              }
 

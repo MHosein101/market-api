@@ -5,10 +5,11 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\SoftDeletes;
 
+
 /**
- * Model to work with user_histories table
+ * List of products user visited
  * 
- * @author Laravel
+ * @author Hosein Marzban
  */
 class UserHistory extends Model
 {
@@ -18,11 +19,10 @@ class UserHistory extends Model
     use SoftDeletes;
     
     /**
-     * The attributes that are mass assignable.
+     * The attributes that aren't mass assignable. 
+     * If leave empty, all attributes will be mass assignable.
      *
      * @var array
      */
-    protected $fillable = [
-        'product_id', 'user_id'
-    ];
+    protected $guarded = [];
 }

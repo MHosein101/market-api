@@ -9,7 +9,7 @@ use Illuminate\Database\Eloquent\SoftDeletes;
 /**
  * Model to work with brands table
  * 
- * @author Laravel
+ * @author Hosein Marzban
  */
 class Brand extends Model
 {
@@ -19,35 +19,44 @@ class Brand extends Model
     use SoftDeletes;
 
     /**
-     * The attributes that are mass assignable.
+     * The attributes that aren't mass assignable. 
+     * If leave empty, all attributes will be mass assignable.
      *
      * @var array
      */
-    protected $fillable = [
-        'name', 'english_name', 'slug', 'company', 'logo_url'
-    ];
+    protected $guarded = [];
 
     /**
      * The attributes that should be hidden for serialization.
      *
      * @var array
      */
-    protected $hidden = [ 'created_at', 'updated_at', 'deleted_at' ];
+    protected $hidden = 
+    [ 
+        'created_at', 'updated_at', 'deleted_at' 
+    ];
 
     /**
      * New attributes that should be appended to model
      *
      * @var array
      */
-    protected $appends = [ 'is_brand_image', 'is_show' ];
+    protected $appends = 
+    [ 
+        'is_brand_image', 
+        'is_show' 
+    ];
 
     /**
      * Override logo_url value if it's empty
      * 
      * @return string
      */
-    public function getLogoUrlAttribute($value) {
-        return $value != '' ? $value : request()->getSchemeAndHttpHost() . '/default.jpg';
+    public function getLogoUrlAttribute($value) 
+    {
+        return $value != '' 
+        ? $value 
+        : request()->getSchemeAndHttpHost() . '/default.jpg';
     }
 
     /**
@@ -55,7 +64,8 @@ class Brand extends Model
      * 
      * @return boolean
      */
-    public function getIsBrandImageAttribute() {
+    public function getIsBrandImageAttribute() 
+    {
         return !Str::contains($this->logo_url, 'default.jpg');
     }
 
@@ -64,7 +74,8 @@ class Brand extends Model
      * 
      * @return boolean
      */
-    public function getIsShowAttribute() {
-        return ($this->deleted_at == null);
+    public function getIsShowAttribute() 
+    {
+        return $this->deleted_at == null;
     }
 }

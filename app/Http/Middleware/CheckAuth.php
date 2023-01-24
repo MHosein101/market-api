@@ -23,11 +23,15 @@ class CheckAuth
      */
     public function handle(Request $request, Closure $next)
     {
-        if ($request->hasHeader('Authorization'))
+        if( $request->hasHeader('Authorization') )
+        {
             return (new ValidateToken)->handle($request, $next);
+        }
 
         $user = null;
+        
         $request->merge(compact('user'));
+
         return $next($request);
     }
 }

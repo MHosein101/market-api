@@ -15,57 +15,60 @@ use Illuminate\Foundation\Auth\User as Authenticatable;
 /**
  * Model to work with users table
  * 
- * @author Laravel
+ * @author Hosein Marzban
  */
 class User extends Authenticatable
 {
+    
     /**
      * Adds a deleted_at column to model's table
      */
     use SoftDeletes; // HasApiTokens, HasFactory, Notifiable, 
 
     /**
-     * The attributes that are mass assignable.
+     * The attributes that aren't mass assignable. 
+     * If leave empty, all attributes will be mass assignable.
      *
      * @var array
      */
-    protected $fillable = [
-        'account_type', 
-        
-        'profile_image',
-        'full_name',
-        'national_code',
-
-        'phone_number_primary',
-        'phone_number_secondary',
-        'house_number',
-
-        'store_id' ,
-
-        'password',
-    ];
+    protected $guarded = [];
     
     /**
      * The attributes that should be hidden for serialization.
      *
      * @var array
      */
-    protected $hidden = [ 'verification_code', 'password', 'created_at', 'updated_at', 'deleted_at' ];
+    protected $hidden = 
+    [ 
+        'verification_code', 
+        'password', 
+        'created_at', 'updated_at', 'deleted_at' 
+    ];
 
     /**
      * New attributes that should be appended to model
      *
      * @var array
      */
-    protected $appends = [ 'address', 'is_password', 'is_profile_image', 'is_active', 'is_pending' ];
+    protected $appends = 
+    [ 
+        'address', 
+        'is_password', 
+        'is_profile_image', 
+        'is_active', 
+        'is_pending' 
+    ];
 
     /**
      * Override profile_image value if it's empty
      * 
      * @return string
      */
-    public function getProfileImageAttribute($value) {
-        return $value != '' ? $value : request()->getSchemeAndHttpHost() . '/default.jpg';
+    public function getProfileImageAttribute($value) 
+    {
+        return $value != '' 
+        ? $value 
+        : request()->getSchemeAndHttpHost() . '/default.jpg';
     }
 
     /**
@@ -73,7 +76,8 @@ class User extends Authenticatable
      * 
      * @return boolean
      */
-    public function getIsProfileImageAttribute() {
+    public function getIsProfileImageAttribute() 
+    {
         return !Str::contains($this->profile_image, 'default.jpg');
     }
 
@@ -82,8 +86,9 @@ class User extends Authenticatable
      * 
      * @return boolean
      */
-    public function getIsActiveAttribute() {
-        return ($this->deleted_at == null);
+    public function getIsActiveAttribute() 
+    {
+        return $this->deleted_at == null;
     }
 
     /**
@@ -91,9 +96,13 @@ class User extends Authenticatable
      * 
      * @return boolean
      */
-    public function getIsPendingAttribute() {
-        if($this->store_id != null)
+    public function getIsPendingAttribute() 
+    {
+        if( $this->store_id != null )
+        {
             return Store::withTrashed()->find($this->store_id)->is_pending;
+        }
+
         return false;
     }
 
@@ -102,8 +111,11 @@ class User extends Authenticatable
      * 
      * @return boolean
      */
-    public function getIsPasswordAttribute() {
-        return ($this->password != null);
+    public function getIsPasswordAttribute() 
+    {
+        return $this->password != null;
+
+        // return ! Hash::check($this->password , $this->phone_number_primary);
     }
 
     /**
@@ -111,9 +123,11 @@ class User extends Authenticatable
      * 
      * @return boolean
      */
-    public function getAddressAttribute() {
+    public function getAddressAttribute() 
+    {
         $adds = UserAddress::where('user_id', $this->id)->first();
-        return ( $adds == null ) ? [] : $adds ;
+
+        return $adds == null  ? [] : $adds ;
     }
     
     /**
@@ -124,11 +138,18 @@ class User extends Authenticatable
     public function generateVerificationCode()
     {
         $nums = '0123456789';
+
         $code = '';
+
         foreach([0,1,2,3] as $i)
-            $code .= ( $nums[ random_int( 0, strlen($nums)-1 ) ] );
+        {
+            $ri = random_int( 0, strlen($nums)-1 );
+
+            $code .= $nums[$ri];
+        }
 
         $this->verification_code = $code;
+
         $this->save();
 
         return $code;
@@ -144,14 +165,17 @@ class User extends Authenticatable
         $token = Str::random(60);
         
         $this->verification_code = null;
+
         $this->save();
 
-        UserToken::create([
-            'token' => $token ,
-            'expire' => time() + (3600 * 24 * 14) ,
+        UserToken::create(
+        [
+            'token'   => $token ,
+            'expire'  => time() + (3600 * 24 * 14) ,
             'user_id' => $this->id ,
         ]);
 
         return $token;
     }
+
 }

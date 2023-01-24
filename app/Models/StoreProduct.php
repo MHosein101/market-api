@@ -8,7 +8,7 @@ use Illuminate\Database\Eloquent\SoftDeletes;
 /**
  * Model to work with store_products table
  * 
- * @author Laravel
+ * @author Hosein Marzban
  */
 class StoreProduct extends Model
 {
@@ -18,67 +18,56 @@ class StoreProduct extends Model
     use SoftDeletes;
     
     /**
-     * The attributes that are mass assignable.
+     * The attributes that aren't mass assignable. 
+     * If leave empty, all attributes will be mass assignable.
      *
      * @var array
      */
-    protected $fillable = [
-        'production_date' ,
-        'expire_date' ,
-        
-        'production_price' ,
-        'consumer_price' ,
-        'store_price' ,
-        
-        'store_price_1' ,
-        'store_price_2' ,
-
-        'price_update_time' ,
-        
-        'per_unit' ,
-        'warehouse_count' ,
-        
-        'delivery_description' ,
-        'store_note' ,
-        
-        'cash_payment_discount' ,
-        
-        'commission' ,
-        
-        'admin_confirmed' ,
-        
-        'product_id' ,
-        'store_id' ,
-    ];
+    protected $guarded = [];
 
     /**
      * The attributes that should be hidden for serialization.
      *
      * @var array
      */
-    protected $hidden = [ 'admin_confirmed', 'product_id', 'store_id', 'created_at', 'updated_at', 'deleted_at' ];
+    protected $hidden = 
+    [ 
+        'admin_confirmed', 
+        'product_id', 
+        'store_id', 
+        'created_at', 'updated_at', 'deleted_at' 
+    ];
 
     /**
      * New attributes that should be appended to model
      *
      * @var array
      */
-    protected $appends = [ 'is_show', 'discounts', 'base_product', 'store' ];
+    protected $appends = 
+    [ 
+        'is_show', 
+        'discounts', 
+        'base_product', 
+        'store' 
+    ];
 
     /**
      * Casts field value to specific type
      *
      * @var array
      */
-    protected $casts = [ ];
+    protected $casts = [];
 
     /**
      * Return product's discounts
      * 
      * @return Store
      */
-    public function getDiscountsAttribute() {
-        return StoreProductDiscount::where('product_id', $this->id)->orderBy('created_at')->get();
+    public function getDiscountsAttribute() 
+    {
+        return StoreProductDiscount::where('product_id', $this->id)
+        ->orderBy('created_at')
+        ->get();
     }
 
     /**
@@ -86,8 +75,10 @@ class StoreProduct extends Model
      * 
      * @return Product
      */
-    public function getBaseProductAttribute() {
+    public function getBaseProductAttribute() 
+    {
         $product = Product::withTrashed()->find($this->product_id);
+
         return $product;
     }
 
@@ -96,8 +87,10 @@ class StoreProduct extends Model
      * 
      * @return Store
      */
-    public function getStoreAttribute() {
+    public function getStoreAttribute() 
+    {
         $store = Store::find($this->store_id);
+
         return $store;
     }
 
@@ -106,7 +99,8 @@ class StoreProduct extends Model
      * 
      * @return boolean
      */
-    public function getIsShowAttribute() {
-        return ($this->deleted_at == null);
+    public function getIsShowAttribute() 
+    {
+        return $this->deleted_at == null;
     }
 }

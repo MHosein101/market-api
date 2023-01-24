@@ -23,12 +23,14 @@ class StoreCanAccess
      */
     public function handle(Request $request, Closure $next)
     {
-        if($request->user->account_type != UserAccountType::Store) {
-            return response()
-            ->json([ 
-                'status' => 403 ,
-                'message' => 'You are not a store manager.' 
-            ], 403);
+        if( $request->user->account_type != UserAccountType::Store ) 
+        {
+            return 
+                response()
+                ->json([ 
+                    'status'  => 403 ,
+                    'message' => 'You are not a store manager.' 
+                ], 403);
         }
 
         return $next($request);

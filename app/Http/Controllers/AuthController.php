@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Http\Helpers\CartHelper;
 use App\Models\User;
 use Illuminate\Http\Request;
 use App\Models\UserAccountType;
@@ -51,6 +52,7 @@ class AuthController extends Controller
             return $result['errors'];
 
         $user = $result['user'];
+
         $apiToken = $user->generateApiToken();
 
         return response()
@@ -99,6 +101,7 @@ class AuthController extends Controller
         else
             $checkPassword = $request->input('password') == $user->phone_number_primary;
 
+        // if(Hash::check($request->input('password') , $user->password)) {
         if(!$checkPassword) {
             return response()
             ->json([ 
@@ -108,6 +111,8 @@ class AuthController extends Controller
         }
 
         $apiToken = $user->generateApiToken();
+
+        $cart = CartHelper::cartSummary($user->id);
         
         return response()
         ->json([
@@ -116,6 +121,9 @@ class AuthController extends Controller
             'phone_number' => $user->phone_number_primary ,
             'is_password' => $user->is_password ,
             'API_TOKEN' => $apiToken ,
+            'user' => $user ,
+            'cart_count' => $cart['cart_count'] ,
+            'cart' => $cart['cart'] ,
             ''
         ], 200)
         ->cookie('API_TOKEN', $apiToken, 60 * 24 * 14, null, 'http://localhost:3000', true, false);

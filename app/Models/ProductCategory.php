@@ -8,7 +8,7 @@ use Illuminate\Database\Eloquent\SoftDeletes;
 /**
  * Model to work with product_categories table
  * 
- * @author Laravel
+ * @author Hosein Marzban
  */
 class ProductCategory extends Model
 {
@@ -18,13 +18,12 @@ class ProductCategory extends Model
     use SoftDeletes;
     
     /**
-     * The attributes that are mass assignable.
+     * The attributes that aren't mass assignable. 
+     * If leave empty, all attributes will be mass assignable.
      *
      * @var array
      */
-    protected $fillable = [
-        'product_id', 'category_id'
-    ];
+    protected $guarded = [];
 
     /**
      * Do not include record timestamps

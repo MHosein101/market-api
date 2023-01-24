@@ -8,7 +8,8 @@ namespace App\Models;
  * 
  * @author Hosein marzban
  */
-class UserAccountType {
+class UserAccountType 
+{
 
     const Normal = 'normal';
 

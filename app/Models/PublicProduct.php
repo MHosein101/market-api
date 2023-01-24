@@ -6,6 +6,11 @@ use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\SoftDeletes;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 
+/**
+ * Public view of products table data
+ * 
+ * @author Hosein Marzban
+ */
 class PublicProduct extends SearchProduct
 {
     /**
@@ -25,15 +30,17 @@ class PublicProduct extends SearchProduct
      *
      * @var array
      */
-    protected $fillable = [ ];
+    protected $fillable = [];
     
     /**
      * The attributes that should be hidden for serialization.
      *
      * @var array
      */
-    protected $hidden = [ 
-        'brand_id', 'created_at', 'updated_at', 'deleted_at' 
+    protected $hidden = 
+    [ 
+        'brand_id', 
+        'created_at', 'updated_at', 'deleted_at' 
     ];
 
     /**
@@ -41,7 +48,14 @@ class PublicProduct extends SearchProduct
      *
      * @var array
      */
-    protected $appends = [ 
-        'shops_count', 'images', 'is_image_url', 'image_url' , 'is_like', 'is_analytic', 'is_cart'
+    protected $appends = 
+    [ 
+        'shops_count', 
+        'images', 
+        'is_image_url', 
+        'image_url' , 
+        'is_like', 
+        'is_analytic', 
+        'is_cart'
     ];
 }

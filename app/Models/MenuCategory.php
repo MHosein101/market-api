@@ -6,6 +6,11 @@ use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\SoftDeletes;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 
+/**
+ * Multi level menu categories model
+ * 
+ * @author Hosein Marzban
+ */
 class MenuCategory extends Category
 {
     /**
@@ -25,28 +30,43 @@ class MenuCategory extends Category
      *
      * @var array
      */
-    protected $fillable = [ ];
+    protected $fillable = [];
     
     /**
      * The attributes that should be hidden for serialization.
      *
      * @var array
      */
-    protected $hidden = [ 'name', 'parent_id', 'created_at', 'updated_at', 'deleted_at' ];
+    protected $hidden = 
+    [ 
+        'name', 
+        'parent_id', 
+        'created_at', 
+        'updated_at', 
+        'deleted_at' 
+    ];
 
     /**
      * New attributes that should be appended to model
      *
      * @var array
      */
-    protected $appends = [ 'title', 'type', 'status', 'is_sub_category', 'sub_categories' ];
+    protected $appends = 
+    [ 
+        'title', 
+        'type', 
+        'status', 
+        'is_sub_category', 
+        'sub_categories' 
+    ];
 
     /**
      * Return name column value
      * 
      * @return string
      */
-    public function getTitleAttribute() {
+    public function getTitleAttribute() 
+    {
         return $this->name;
     }
 
@@ -55,7 +75,8 @@ class MenuCategory extends Category
      * 
      * @return string
      */
-    public function getTypeAttribute() {
+    public function getTypeAttribute() 
+    {
         return 'category';
     }
 
@@ -64,23 +85,29 @@ class MenuCategory extends Category
      * 
      * @return boolean
      */
-    public function getStatusAttribute() {
+    public function getStatusAttribute() 
+    {
         return false;
     }
+
     /**
      * Compute parent_id column as boolean value
      * 
      * @return boolean
      */
-    public function getIsSubCategoryAttribute() {
+    public function getIsSubCategoryAttribute() 
+    {
         return $this->parent_id != null;
     }
+
     /**
      * Return children of category
      * 
      * @return array
      */
-    public function getSubCategoriesAttribute() {
+    public function getSubCategoriesAttribute() 
+    {
         return MenuCategory::where('parent_id', $this->id)->get();
     }
+
 }

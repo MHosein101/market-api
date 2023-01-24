@@ -6,6 +6,11 @@ use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\SoftDeletes;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 
+/**
+ * Model for discount items of each store product
+ * 
+ * @author Hosein Marzban
+ */
 class StoreProductDiscount extends Model
 {
     /**
@@ -14,16 +19,23 @@ class StoreProductDiscount extends Model
     use SoftDeletes;
     
     /**
-     * The attributes that are mass assignable.
+     * The attributes that aren't mass assignable. 
+     * If leave empty, all attributes will be mass assignable.
      *
      * @var array
      */
-    protected $fillable = [ 'discount_type', 'discount_value', 'final_price', 'product_id' ];
+    protected $guarded = [];
 
     /**
      * The attributes that should be hidden for serialization.
      *
      * @var array
      */
-    protected $hidden = [ 'id', 'product_id', 'created_at', 'updated_at', 'deleted_at' ];
+    protected $hidden = 
+    [ 
+        'id', 
+        'product_id', 
+        'created_at', 'updated_at', 'deleted_at' 
+    ];
+
 }

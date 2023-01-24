@@ -6,6 +6,11 @@ use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\SoftDeletes;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 
+/**
+ * Model to work user cart items
+ * 
+ * @author Hosein Marzban
+ */
 class UserCart extends Model
 {
     /**
@@ -21,54 +26,77 @@ class UserCart extends Model
     use SoftDeletes;
 
     /**
-     * The attributes that are mass assignable.
+     * The attributes that aren't mass assignable. 
+     * If leave empty, all attributes will be mass assignable.
      *
      * @var array
      */
-    protected $fillable = [
-        'count' ,
-        'is_payment_cash' ,
-
-        'current_price' ,
-
-        'product_id' ,
-        'store_id' ,
-        'base_product_id' ,
-        'user_id' ,
-    ];
+    protected $guarded = [];
 
     /**
      * The attributes that should be hidden for serialization.
      *
      * @var array
      */
-    protected $hidden = [ 'id', 'count', 'current_price', 'is_payment_cash', 'product_id', 'store_id', 'base_product_id', 'user_id', 'created_at', 'updated_at', 'deleted_at' ];
+    protected $hidden = 
+    [ 
+        'id', 
+        'count', 
+        'current_price', 
+        'is_payment_cash', 
+        'product_id', 
+        'store_id', 
+        'base_product_id', 
+        'user_id', 
+        'created_at', 'updated_at', 'deleted_at' 
+    ];
 
     /**
      * New attributes that should be appended to model
      *
      * @var array
      */
-    protected $appends = [ 'item_id', 'price', 'product', 'discounts', 'state' ];
+    protected $appends = 
+    [ 
+        'item_id', 
+        'price', 
+        'product', 
+        'discounts', 
+        'state' 
+    ];
 
     /**
      * Casts field value to specific type
      *
      * @var array
      */
-    protected $casts = [
+    protected $casts = 
+    [
         'is_payment_cash' => 'boolean'
     ];
+
+    /**
+     * Return new query builder for current user
+     * 
+     * @return QueryBuilder
+     */
+    public static function currentUser() 
+    {
+        return UserCart::where('user_id', request()->user->id);
+    }
+
 
     /**
      * Return ids
      * 
      * @return array
      */
-    public function getItemIdAttribute() {
-        return [
+    public function getItemIdAttribute() 
+    {
+        return 
+        [
             'product' => $this->product_id ,
-            'store' => $this->store_id
+            'store'  => $this->store_id
         ];
     }
 
@@ -77,12 +105,15 @@ class UserCart extends Model
      * 
      * @return Product
      */
-    public function getProductAttribute() {
+    public function getProductAttribute() 
+    {
         $p = Product::find($this->base_product_id);
-        return [
-            'title' => $p->title ,
-            'slug' => $p->slug ,
-            'image_url' => $p->image_url
+
+        return 
+        [
+            'title'     => $p->title ,
+            'slug'      => $p->slug ,
+            'image_url' => $p->image_url ,
         ];
     }
 
@@ -91,7 +122,8 @@ class UserCart extends Model
      * 
      * @return Product
      */
-    public function getDiscountsAttribute() {
+    public function getDiscountsAttribute() 
+    {
         return StoreProductDiscount::where('product_id', $this->product_id)->get();
     }
 
@@ -100,21 +132,28 @@ class UserCart extends Model
      * 
      * @return array
      */
-    public function getStateAttribute() {
+    public function getStateAttribute() 
+    {
         $sp = StoreProduct::find($this->product_id);
+
         $show = false;
+
         $msg = '';
 
-        if($sp->warehouse_count == 0) {
+        if( $sp->warehouse_count == 0 ) 
+        {
             $show = true;
             $msg = 'این کالا موجود نمی باشد.';
         }
 
-        if($sp->store_price != $this->current_price) {
+        if( $sp->store_price != $this->current_price ) 
+        {
             $diff = $sp->store_price - $this->current_price;
+
             $type = 'افزایش';
 
-            if($diff < 0) {
+            if( $diff < 0 ) 
+            {
                 $type = 'کاهش';
                 $diff = -$diff;
             }
@@ -127,14 +166,18 @@ class UserCart extends Model
                 (string)$diff );
 
             $show = true;
+
             $msg = 'این کالا به میزان ' . $diff . ' تومان ' . $type . ' قیمت داشته است.';
         }
 
-        return [
-            'is_show' => $show ,
-            'is_available' => $sp->warehouse_count > 0 ,
+        return 
+        [
+            'is_show'          => $show ,
+            'is_available'     => $sp->warehouse_count > 0 ,
             'is_price_changed' => $sp->store_price != $this->current_price ,
-            'message' => $msg ,
+            'new_price'        => $sp->store_price ,
+            'limit'            => $sp->warehouse_count ,
+            'message'          => $msg ,
         ];
     }
 
@@ -143,42 +186,59 @@ class UserCart extends Model
      * 
      * @return Product
      */
-    public function getPriceAttribute() {
+    public function getPriceAttribute() 
+    {
         $sp = StoreProduct::find($this->product_id);
 
-        $discountsOfPrice = StoreProductDiscount::where('product_id', $this->product_id)
+        $discountsOfPrice = 
+        StoreProductDiscount::where('product_id', $this->product_id)
         ->where('discount_type', StoreProductDiscountType::Price)
         ->orderBy('discount_value', 'desc')
         ->get();
 
-        $discountsOfCount = StoreProductDiscount::where('product_id', $this->product_id)
+        $discountsOfCount = 
+        StoreProductDiscount::where('product_id', $this->product_id)
         ->where('discount_type', StoreProductDiscountType::Count)
         ->orderBy('discount_value', 'desc')
         ->get();
 
         $originalPrice = $sp->store_price;
+
         $originalTotalPrice = $sp->store_price * $this->count;
+
         $isDiscount = false;
+
         $finalPrice = $originalPrice;
+
         $discountPrice = 0;
 
-        if($this->is_payment_cash) {
+        if( $this->is_payment_cash ) 
+        {
             $discountPrice = ( $originalTotalPrice / 100 ) * $sp->cash_payment_discount;
+
             $isDiscount = true;
         }
 
-        foreach($discountsOfCount as $d) {
-            if($d->discount_value <= $this->count) {
+        foreach($discountsOfCount as $d) 
+        {
+            if( $d->discount_value <= $this->count ) 
+            {
                 $discountPrice += ($d->discount_value * $originalPrice) - $d->final_price;
+
                 $isDiscount = true;
+
                 break;
             }
         }
 
-        foreach($discountsOfPrice as $d) {
-            if(!$isDiscount && $d->discount_value <= $originalTotalPrice) {
+        foreach($discountsOfPrice as $d) 
+        {
+            if( !$isDiscount && $d->discount_value <= $originalTotalPrice ) 
+            {
                 $discountPrice += $d->discount_value - $d->final_price;
+
                 $isDiscount = true;
+
                 break;
             }
         }
@@ -186,21 +246,24 @@ class UserCart extends Model
         $cashPayDiscount = StoreProduct::find($this->product_id)->cash_payment_discount;
 
         $finalPriceTotal = $originalTotalPrice - $discountPrice;
+
         $finalPrice = round($finalPriceTotal / $this->count);
 
         $discountPrice = $originalPrice - $finalPrice;
+
         $discountPercent = $discountPrice / ( $originalPrice / 100 );
         
-        return [
-            'count' => $this->count ,
+        return 
+        [
+            'count'    => $this->count ,
             'original' => $originalPrice ,
-            'original_total' => $originalTotalPrice ,
+            'original_total'        => $originalTotalPrice ,
             'cash_payment_discount' => $cashPayDiscount ,
-            'is_discount' => $isDiscount ,
-            'discount_price' => $discountPrice ,
+            'is_discount'      => $isDiscount ,
+            'discount_price'   => $discountPrice ,
             'discount_percent' => round($discountPercent, 1) ,
-            'final' => $finalPrice ,
-            'final_total' => $finalPriceTotal ,
+            'final'            => $finalPrice ,
+            'final_total'      => $finalPriceTotal ,
         ];
     }
 

@@ -6,6 +6,11 @@ use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\SoftDeletes;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 
+/**
+ * List of user marked products as price analytics
+ * 
+ * @author Hosein Marzban
+ */
 class UserAnalytic extends Model
 {
     /**
@@ -14,11 +19,10 @@ class UserAnalytic extends Model
     use SoftDeletes;
     
     /**
-     * The attributes that are mass assignable.
+     * The attributes that aren't mass assignable. 
+     * If leave empty, all attributes will be mass assignable.
      *
      * @var array
      */
-    protected $fillable = [
-        'product_id', 'user_id'
-    ];
+    protected $guarded = [];
 }

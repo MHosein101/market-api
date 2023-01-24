@@ -8,7 +8,7 @@ use Illuminate\Database\Eloquent\SoftDeletes;
 /**
  * Model to work with user_addresses table
  * 
- * @author Laravel
+ * @author Hosein Marzban
  */
 class UserAddress extends Model
 {
@@ -18,23 +18,23 @@ class UserAddress extends Model
     use SoftDeletes;
     
     /**
-     * The attributes that are mass assignable.
+     * The attributes that aren't mass assignable. 
+     * If leave empty, all attributes will be mass assignable.
      *
      * @var array
      */
-    protected $fillable = [
-        'province',
-        'city',
-        'detail',
-        'post_code',
-        'user_id',
-    ];
+    protected $guarded = [];
 
     /**
      * The attributes that should be hidden for serialization.
      *
      * @var array
      */
-    protected $hidden = [ 'id', 'user_id', 'created_at', 'updated_at', 'deleted_at' ];
+    protected $hidden = 
+    [ 
+        'id', 
+        'user_id', 
+        'created_at', 'updated_at', 'deleted_at' 
+    ];
     
 }

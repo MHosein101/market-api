@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Http\Helpers\CartHelper;
 use App\Models\User;
 use App\Models\Brand;
 use App\Models\Store;
@@ -86,12 +87,15 @@ class UserController extends Controller
     public function info(Request $request)
     {
         $user = User::find($request->user->id);
+        $cart = CartHelper::cartSummary();
 
         return response()
         ->json([ 
             'status' => 200 ,
             'message' => 'OK' ,
-            'user' => $user
+            'user' => $user ,
+            'cart_count' => $cart['cart_count'] ,
+            'cart' => $cart['cart'] ,
         ], 200);
     }
     
