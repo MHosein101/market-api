@@ -146,6 +146,12 @@ class UserCart extends Model
             $msg = 'این کالا موجود نمی باشد.';
         }
 
+        if( $sp->warehouse_count < $this->count ) 
+        {
+            $show = true;
+            $msg = 'تعداد این کالا بیش از حد موجودی است';
+        }
+
         if( $sp->store_price != $this->current_price ) 
         {
             $diff = $sp->store_price - $this->current_price;
@@ -173,11 +179,11 @@ class UserCart extends Model
         return 
         [
             'is_show'          => $show ,
+            'message'          => $msg ,
             'is_available'     => $sp->warehouse_count > 0 ,
             'is_price_changed' => $sp->store_price != $this->current_price ,
             'new_price'        => $sp->store_price ,
             'limit'            => $sp->warehouse_count ,
-            'message'          => $msg ,
         ];
     }
 
@@ -202,9 +208,9 @@ class UserCart extends Model
         ->orderBy('discount_value', 'desc')
         ->get();
 
-        $originalPrice = $sp->store_price;
+        $originalPrice = $this->current_price;
 
-        $originalTotalPrice = $sp->store_price * $this->count;
+        $originalTotalPrice = $originalPrice * $this->count;
 
         $isDiscount = false;
 

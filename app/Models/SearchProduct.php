@@ -118,7 +118,7 @@ class SearchProduct extends Product
     {
         if( request()->user != null ) 
         {
-            $record = UserFavorite::currentUser()
+            $record = UserFavorite::where('user_id', request()->user->id)
             ->where('product_id', $this->id)
             ->first();
 
@@ -137,7 +137,7 @@ class SearchProduct extends Product
     {
         if( request()->user != null ) 
         {
-            $record = UserFavorite::currentUser()
+            $record = UserAnalytic::where('user_id', request()->user->id)
             ->where('product_id', $this->id)
             ->first();
 
@@ -156,7 +156,7 @@ class SearchProduct extends Product
     {
         if( request()->user != null ) 
         {
-            $record = UserFavorite::currentUser()
+            $record = UserCart::currentUser()
             ->where('base_product_id', $this->id)
             ->first();
 

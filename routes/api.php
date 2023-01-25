@@ -10,6 +10,7 @@ use App\Http\Controllers\AuthController;
 use App\Http\Controllers\PublicProductController;
 use App\Http\Controllers\PublicSearchController;
 use App\Http\Controllers\StoreController;
+use App\Http\Controllers\StoreFactorController;
 use App\Http\Controllers\StoreProductController;
 use App\Http\Controllers\UserActivityController;
 use App\Http\Controllers\UserCartController;
@@ -30,16 +31,30 @@ use App\Http\Controllers\UserController;
 //     return $request->user();
 // });
 
-Route::group([ 'middleware' => ['is-user', 'valid-query'] , 'prefix' => 'public' ], function () {
-    Route::controller(PublicSearchController::class)->group(function() {
+Route::group(
+    [ 
+        'middleware' => ['is-user', 'valid-query'] , 
+        'prefix' => 'public' 
+    ], function () 
+{
+    Route::controller(PublicSearchController::class)->group(function() 
+    {
         Route::get('search', 'search');
+
         Route::get('categories', 'categories');
         Route::get('categories/{categorySlug}/path', 'categoryBreadCrump');
         Route::get('categories/{categorySlug}/sub', 'categoryChildrenTree');
+
         Route::get('brands', 'brands');
     });
-    Route::controller(PublicProductController::class)->group(function() {
-        Route::group([ 'middleware' => ['valid-product'] , 'prefix' => 'product' ], function () {      
+    Route::controller(PublicProductController::class)->group(function() 
+    {
+        Route::group(
+            [ 
+                'middleware' => ['valid-product'] , 
+                'prefix' => 'product' 
+            ], function () 
+        {      
             Route::get('/{productSlug}', 'detail');
             Route::get('/{productSlug}/sales', 'sales');
             Route::get('/{productSlug}/similars', 'similars');
@@ -47,99 +62,140 @@ Route::group([ 'middleware' => ['is-user', 'valid-query'] , 'prefix' => 'public'
     });
 });
 
-Route::controller(AuthController::class)->group(function() {
+Route::controller(AuthController::class)->group(function() 
+{
     Route::get('debug', 'debug');
     
     Route::post('signup/{type}', 'signup');
+    Route::post('login/credentials', 'loginCredentials');
+
     Route::post('login', 'loginByCode');
     Route::post('verify', 'codeVerification');
-    Route::post('login/credentials', 'loginCredentials');
 });
 
-Route::group([ 'middleware' => ['user', 'valid-query'] , 'prefix' => 'user' ], function () {
-    Route::controller(UserController::class)->group(function() {
-        Route::get('/', 'info');
-        Route::get('info', 'info');
-        Route::post('password', 'changePassword');
+Route::group(
+    [ 
+        'middleware' => ['user', 'valid-query'] , 
+        'prefix' => 'user' 
+    ], function () 
+{
+    Route::controller(UserController::class)->group(function() 
+    {
+        Route::get   ('/', 'info');
+        Route::get   ('info', 'info');
+        Route::post  ('password', 'changePassword');
         Route::delete('logout', 'logout');
     });
-    Route::controller(UserActivityController::class)->group(function() {
+    Route::controller(UserActivityController::class)->group(function() 
+    {
         Route::get('favorites', 'getFavorites');
         Route::put('favorites/{productId}', 'modifyFavorites');
+
         Route::get('analytics', 'getAnalytics');
         Route::put('analytics/{productId}', 'modifyAnalytics');
+
         Route::get('history', 'getHistory');
         Route::put('history/{productSlug?}', 'modifyHistory');
     });
-    Route::group([ 'prefix' => 'cart' ], function () {
-        Route::controller(UserCartController::class)->group(function() {
-            Route::get('/', 'getStoresSummary');
-            Route::get('/store/{storeId}', 'getStoreItems');
-            Route::get('/items', 'getCartSummary');
+    Route::controller(UserCartController::class)->group(function() 
+    {
+        Route::get   ('cart', 'getStoresSummary');
+        Route::get   ('cart/store/{storeId}', 'getStoreItems');
+        Route::get   ('cart/items', 'getCartSummary');
 
-            Route::post('/{productId}', 'addProduct');
+        Route::post  ('cart/{productId}', 'addProduct');
+        Route::put   ('cart/store/{storeId}/product/{productId}/{type}/{isFactor?}', 'updateItemCount');
+        Route::delete('cart/store/{storeId}', 'deleteStoreItems');
 
-            Route::put('/store/{storeId}/product/{productId}/{type}/{isFactor?}', 'updateItemCount');
-
-            Route::delete('/store/{storeId}', 'deleteStoreItems');
-        });
+        Route::post  ('factor/{storeId}', 'createFactor');
     });
 });
-Route::group([ 'middleware' => ['user', 'admin', 'valid-query'] , 'prefix' => 'admin' ], function () {
+Route::group(
+    [ 
+        'middleware' => ['user', 'admin', 'valid-query'] , 
+        'prefix' => 'admin' 
+    ], function () 
+{
     Route::get('counter', [UserController::class,'adminDataCount']);
     
-    Route::controller(AdminCategoryController::class)->group(function() {
-        Route::get('categories', 'getList');
-        Route::get('categories/list/{categoryId?}', 'getSimpleList');
+    Route::controller(AdminCategoryController::class)->group(function() 
+    {
+        Route::get ('categories', 'getList');
+        Route::get ('categories/list/{categoryId?}', 'getSimpleList');
+
         Route::post('categories', 'createOrUpdateCategory');
         Route::post('categories/{categoryId}/update', 'createOrUpdateCategory');
-        Route::put('categories/{categoryId}/state', 'changeCategoryState');
+
+        Route::put ('categories/{categoryId}/state', 'changeCategoryState');
     });
-    Route::controller(AdminBrandController::class)->group(function() {
-        Route::get('brands', 'getList');
+    Route::controller(AdminBrandController::class)->group(function() 
+    {
+        Route::get ('brands', 'getList');
+
         Route::post('brands', 'createOrUpdateBrand');
         Route::post('brands/{brandId}/update', 'createOrUpdateBrand');
-        Route::put('brands/{brandId}/state', 'changeBrandState');
+
+        Route::put ('brands/{brandId}/state', 'changeBrandState');
     });
-    Route::controller(AdminProductController::class)->group(function() {
-        Route::get('products', 'getList');
-        Route::post('products', 'createOrUpdateProduct');
-        Route::post('products/{productId}/update', 'createOrUpdateProduct');
-        Route::put('products/{productId}/state', 'changeProductState');
+    Route::controller(AdminProductController::class)->group(function() 
+    {
+        Route::get   ('products', 'getList');
+
+        Route::post  ('products', 'createOrUpdateProduct');
+        Route::post  ('products/{productId}/update', 'createOrUpdateProduct');
+
+        Route::put   ('products/{productId}/state', 'changeProductState');
         Route::delete('products/images/{imageId}', 'deleteProductImage');
     });
-    Route::controller(AdminStoreController::class)->group(function() {
-        Route::get('stores', 'getList');
+    Route::controller(AdminStoreController::class)->group(function() 
+    {
+        Route::get ('stores', 'getList');
+
         Route::post('stores', 'createOrUpdateStore');
         Route::post('stores/{storeId}/update', 'createOrUpdateStore');
-        Route::put('stores/{storeId}/state', 'changeStoreState');
-        Route::put('stores/{storeId}/confirm', 'confirmStore');
+
+        Route::put ('stores/{storeId}/state', 'changeStoreState');
+        Route::put ('stores/{storeId}/confirm', 'confirmStore');
     });
-    Route::controller(AdminUserController::class)->group(function() {
-        Route::get('users', 'getList');
+    Route::controller(AdminUserController::class)->group(function() 
+    {
+        Route::get ('users', 'getList');
+
         Route::post('users', 'createOrUpdateUser');
         Route::post('users/{userId}/update', 'createOrUpdateUser');
-        Route::put('users/{userId}/state', 'changeUserState');
+
+        Route::put ('users/{userId}/state', 'changeUserState');
     });
 });
 
 Route::get('/store', [StoreController::class,'info'])->middleware(['user', 'store']);
 
-Route::group([ 'middleware' => ['user', 'store', 'store-confirmed', 'valid-query'] ], function () {
-
+Route::group(
+    [ 
+        'middleware' => ['user', 'store', 'store-confirmed', 'valid-query'] 
+    ], function () 
+{
     Route::get('products/bases', [AdminProductController::class,'getList']);
     Route::get('products/categories', [AdminCategoryController::class,'getList']);
     Route::get('products/brands', [AdminBrandController::class,'getList']);
 
-    Route::group([ 'prefix' => 'store' ], function () {
+    Route::group([ 'prefix' => 'store' ], function () 
+    {
         Route::get('counter', [UserController::class,'storeDataCount']);
 
-        Route::controller(StoreProductController::class)->group(function() {
-            Route::get('products', 'getList');
+        Route::controller(StoreProductController::class)->group(function() 
+        {
+            Route::get ('products', 'getList');
+
             Route::post('products', 'createOrUpdateProduct');
             Route::post('products/{productId}/update', 'createOrUpdateProduct');
-            Route::put('products/{productId}/state', 'changeProductState');
+            
+            Route::put ('products/{productId}/state', 'changeProductState');
+        });
+        Route::controller(StoreFactorController::class)->group(function() 
+        {
+            Route::get('factors', 'getList');
+            Route::put('factors/{factorId}/{state}', 'changeFactorState');
         });
     });
-
 });
