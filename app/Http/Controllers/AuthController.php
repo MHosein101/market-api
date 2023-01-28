@@ -7,6 +7,7 @@ use App\Models\User;
 use Illuminate\Http\Request;
 use App\Models\UserAccountType;
 use App\Http\Helpers\DataHelper;
+use App\Models\Store;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\File;
 use Illuminate\Support\Facades\Hash;
@@ -37,32 +38,44 @@ class AuthController extends Controller
     {
         $result = null;
 
-        if($type == 'user')
+        if( $type == 'user' )
+        {
             $result = (new AdminUserController)->createOrUpdateUser($request, null, true);
+        }
         else if($type == 'store')
+        {
             $result = (new AdminStoreController)->createOrUpdateStore($request, null, true);
+        }
         else
-            return response()
-            ->json([
-                'status' => 401 ,
-                'message' => 'Invalid request'
-            ], 401);
+        {
+            return 
+                response()
+                ->json(
+                [
+                    'status'  => 401 ,
+                    'message' => 'Invalid request'
+                ], 401);
+        }
 
-        if(!$result['ok']) 
+        if( !$result['ok'] )
+        {
             return $result['errors'];
+        }
 
         $user = $result['user'];
 
         $apiToken = $user->generateApiToken();
 
-        return response()
-        ->json([
-            'status' => 200 ,
-            'message' => 'حساب شما ایجاد شد' ,
-            'phone_number' => $user->phone_number_primary ,
-            'is_password' => $user->is_password ,
-            'API_TOKEN' => $apiToken ,
-        ], 200);
+        return 
+            response()
+            ->json(
+            [
+                'status'       => 200 ,
+                'message'      => 'حساب شما ایجاد شد' ,
+                'phone_number' => $user->phone_number_primary ,
+                'is_password'  => $user->is_password ,
+                'API_TOKEN'    => $apiToken ,
+            ], 200);
     }
 
     /**
@@ -80,56 +93,138 @@ class AuthController extends Controller
         $v = DataHelper::validate( response() , $request->post() , 
         [
             'national_code' => [ 'کد ملی', 'required|filled|digits:10' ] ,
-            'password' => [ 'رمز عبور', 'required|filled|min:6' ]
+            'password'      => [ 'رمز عبور', 'required|filled|min:6' ]
         ]);
-        if( $v['code'] == 400 ) return $v['response'];
+
+        if( $v['code'] == 400 )
+        {
+            return $v['response'];
+        }
 
         $user = User::where('national_code', $request->input('national_code'))->first();
         
-        if($user == null) {
-            return response()
-            ->json([ 
-                'status' => 401 ,
-                'message' => 'کاربری یافت نشد'
-            ], 401); 
+        if($user == null) 
+        {
+            return 
+                response()
+                ->json(
+                [ 
+                    'status'  => 401 ,
+                    'message' => 'کاربری یافت نشد'
+                ], 401); 
         }
 
         $checkPassword = true;
 
         if($user->is_password)
+        {
             $checkPassword = Hash::check($request->input('password') , $user->password);
+        }
         else
+        {
             $checkPassword = $request->input('password') == $user->phone_number_primary;
+        }
 
         // if(Hash::check($request->input('password') , $user->password)) {
-        if(!$checkPassword) {
-            return response()
-            ->json([ 
-                'status' => 401 ,
-                'message' => 'اطلاعات وارد شده نادرست است' // 'رمز عبور اشتباه است'
-            ], 401); 
+        if(!$checkPassword) 
+        {
+            return 
+                response()
+                ->json(
+                [ 
+                    'status'  => 401 ,
+                    'message' => 'اطلاعات وارد شده نادرست است' // 'رمز عبور اشتباه است'
+                ], 401); 
         }
 
         $apiToken = $user->generateApiToken();
 
         $cart = CartHelper::cartSummary($user->id);
         
-        return response()
-        ->json([
-            'status' => 200 ,
-            'message' => 'با موفقیت وارد شدید' ,
-            'phone_number' => $user->phone_number_primary ,
-            'is_password' => $user->is_password ,
-            'API_TOKEN' => $apiToken ,
-            'user' => $user ,
-            'cart_count' => $cart['cart_count'] ,
-            'cart' => $cart['cart'] ,
-            ''
-        ], 200)
-        ->cookie('API_TOKEN', $apiToken, 60 * 24 * 14, null, 'http://localhost:3000', true, false);
+        return 
+            response()
+            ->json(
+            [
+                'status'       => 200 ,
+                'message'      => 'با موفقیت وارد شدید' ,
+                'phone_number' => $user->phone_number_primary ,
+                'is_password'  => $user->is_password ,
+                'API_TOKEN'    => $apiToken ,
+                'user'         => $user ,
+                'cart_count'   => $cart['cart_count'] ,
+                'cart'         => $cart['cart'] ,
+                ''
+            ], 200)
+            ->cookie('API_TOKEN', $apiToken, 60 * 24 * 14, null, 'http://localhost:3000', true, false);
     }
 
     
+    /**
+     * Return all users mobile numbers
+     *
+     * @param  Request $request
+     * 
+     * @return Response
+     */ 
+    public function getNumbers(Request $request)
+    {
+        $mobileNumbers = User::pluck('phone_number_primary')->all();
+
+        $mobile2Numbers = User::pluck('phone_number_secondary')->all();
+
+        $houseNumbers = User::pluck('house_number')->all();
+
+        $warehouseNumbers = Store::pluck('warehouse_number')->all();
+
+        $officeNumbers = Store::pluck('office_number')->all();
+
+        $allNumbers = array_merge (
+            $mobileNumbers, 
+            $mobile2Numbers, 
+            $houseNumbers, 
+            $warehouseNumbers, 
+            $officeNumbers
+        );
+
+        $numbers = [];
+
+        foreach($allNumbers as $n)
+        {
+            if($n != '')
+            {
+                $numbers[] = $n;
+            }
+        }
+
+        // $numbers = User::pluck('phone_number_primary')
+
+        // ->merge( User::pluck('phone_number_secondary') )
+
+        // ->merge( User::pluck('house_number') )
+
+        // ->merge( Store::pluck('warehouse_number') )
+
+        // ->merge( Store::pluck('office_number') )
+
+        // ->filter(function ($value, $key) 
+        // {
+        //     return $value != '';
+        // })
+
+        // ->values()
+
+        // ->all();
+
+        return 
+            response()
+            ->json(
+            [ 
+                'status'  => 200 ,
+                'message' => 'OK' ,
+                'numbers' => $numbers
+            ], 200);
+    }
+
     /**
      * Debug helper for developer
      * 
@@ -141,12 +236,15 @@ class AuthController extends Controller
      */ 
     public function debug(Request $request)
     {
-        if($request->query('db') != null) {
+        if( $request->query('db') != null ) 
+        {
             $r = DB::select($request->query('db'));
+
             dd($r);
         }
-        else if($request->query('log') != null) {
-            dd(DataHelper::readLog($request->query('log')));
+        else if( $request->query('log') != null ) 
+        {
+            dd( DataHelper::readLog($request->query('log')) );
         }
     }
 
@@ -167,7 +265,11 @@ class AuthController extends Controller
         [
             'phone_number' => [ 'شماره تماس', 'required|filled|digits_between:10,11|starts_with:09,9' ]
         ]);
-        if( $v['code'] == 400 ) return $v['response'];
+
+        if( $v['code'] == 400 )
+        {
+            return $v['response'];
+        }
 
         $phoneNumber = $request->input('phone_number');
 
@@ -177,35 +279,44 @@ class AuthController extends Controller
         $isSignUp = false;
         $code = 200;
 
-        if($user != null && $user->account_type != UserAccountType::Normal)
-            return response()
-            ->json([ 
-                'status' => 401 ,
-                'message' => 'کاربری یافت نشد'
-            ], 401);
+        if( $user != null && $user->account_type != UserAccountType::Normal )
+        {
+            return 
+                response()
+                ->json(
+                [ 
+                    'status' => 401 ,
+                    'message' => 'کاربری یافت نشد'
+                ], 401);
+        }
 
-        if($user == null) {
-
-            $user = User::create([ 
-                'account_type' => UserAccountType::Normal ,
-                'full_name' => 'user_' . \Illuminate\Support\Str::random(7) ,
+        if($user == null) 
+        {
+            $user = User::create(
+            [ 
+                'account_type'         => UserAccountType::Normal ,
+                'full_name'            => 'user_' . \Illuminate\Support\Str::random(7) ,
                 'phone_number_primary' => $phoneNumber ,
             ]);
 
             $message = 'حساب شما ایجاد شد';
+
             $isSignUp = true;
+
             $code = 201;
         }
 
         $verificationCode = $user->generateVerificationCode();
 
-        return response()
-        ->json([
-            'status' => $code ,
-            'message' => $message ,
-            'is_signup' => $isSignUp ,
-            'verification_code' => $verificationCode , // FOR DEBUG
-        ], $code);
+        return 
+            response()
+            ->json(
+            [
+                'status'            => $code ,
+                'message'           => $message ,
+                'is_signup'         => $isSignUp ,
+                'verification_code' => $verificationCode , // FOR DEBUG
+            ], $code);
 
         // * SHOULD SEND VERIFICATION CODE HERE BUT WE SKIP IT FOR DEBUG *
     }
@@ -225,39 +336,53 @@ class AuthController extends Controller
     {
         $v = DataHelper::validate( response() , $request->post() , 
         [
-            'phone_number' => [ 'شماره تماس', 'required|filled|digits_between:10,11|starts_with:09,9' ] ,
+            'phone_number'      => [ 'شماره تماس', 'required|filled|digits_between:10,11|starts_with:09,9' ] ,
             'verification_code' => [ 'کداعتبارسنجی', 'required|filled|digits:4' ]
         ]);
-        if( $v['code'] == 400 ) return $v['response'];
+
+        if( $v['code'] == 400 )
+        {
+            return $v['response'];
+        }
 
         $phoneNumber = $request->input('phone_number');
 
         $user = User::where('phone_number_primary', $phoneNumber)->first();
         
-        if($user == null || $user->account_type != UserAccountType::Normal)
-            return response()
-            ->json([ 
-                'status' => 401 ,
-                'message' => 'کاربری یافت نشد'
-            ], 401);
+        if( $user == null || $user->account_type != UserAccountType::Normal ) 
+        {
+            return 
+                response()
+                ->json(
+                [ 
+                    'status' => 401 ,
+                    'message' => 'کاربری یافت نشد'
+                ], 401);
+        }
 
         if( $user->verification_code != $request->input('verification_code') )
-            return response()
-            ->json([ 
-                'status' => 401 ,
-                'message' => 'کد وارد شده اشتباه است' 
-            ], 401); 
+        {
+            return 
+                response()
+                ->json(
+                [ 
+                    'status' => 401 ,
+                    'message' => 'کد وارد شده اشتباه است' 
+                ], 401); 
+        }
             
         $apiToken = $user->generateApiToken();
 
-        return response()
-        ->json([
-            'status' => 200 ,
-            'message' => 'با موفقیت وارد شدید' ,
-            'phone_number' => $phoneNumber ,
-            'API_TOKEN' => $apiToken
-        ], 200)
-        ->cookie('API_TOKEN', $apiToken, 60 * 24 * 14, null, 'http://localhost:3000', true, false);
+        return 
+            response()
+            ->json(
+            [
+                'status'       => 200 ,
+                'message'      => 'با موفقیت وارد شدید' ,
+                'phone_number' => $phoneNumber ,
+                'API_TOKEN'    => $apiToken
+            ], 200)
+            ->cookie('API_TOKEN', $apiToken, 60 * 24 * 14, null, 'http://localhost:3000', true, false);
     }
 
 }

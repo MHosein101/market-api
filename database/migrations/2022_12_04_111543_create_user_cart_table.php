@@ -20,6 +20,7 @@ class CreateUserCartTable extends Migration
             $table->boolean('is_payment_cash')->default(false);
 
             $table->unsignedInteger('current_price')->default(0);
+            $table->string('current_discount')->nullable();
 
             $table->unsignedBigInteger('store_id');
             $table->unsignedBigInteger('product_id');

@@ -27,7 +27,10 @@ class Factor extends Model
      * @var array
      */
     protected $hidden = 
-    [ 
+    [
+        'state',
+        'store_note',
+        'user_note',
         'user_id',
         'store_id',
         'ordered',
@@ -53,4 +56,5 @@ class Factor extends Model
     {
         return FactorItem::where('factor_id', $this->id)->get();
     }
+
 }

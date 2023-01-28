@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use App\Http\Helpers\CartHelper;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\SoftDeletes;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
@@ -43,6 +44,7 @@ class UserCart extends Model
         'id', 
         'count', 
         'current_price', 
+        // 'current_discount', 
         'is_payment_cash', 
         'product_id', 
         'store_id', 
@@ -128,7 +130,7 @@ class UserCart extends Model
     }
 
     /**
-     * Return ids
+     * Return item changes messages
      * 
      * @return array
      */
@@ -138,52 +140,75 @@ class UserCart extends Model
 
         $show = false;
 
-        $msg = '';
+        $msg = [];
 
         if( $sp->warehouse_count == 0 ) 
         {
             $show = true;
-            $msg = 'این کالا موجود نمی باشد.';
-        }
 
-        if( $sp->warehouse_count < $this->count ) 
+            $msg[] = 'این کالا موجود نمی باشد.';
+        }
+        else if( $sp->warehouse_count < $this->count ) 
         {
             $show = true;
-            $msg = 'تعداد این کالا بیش از حد موجودی است';
+
+            $msg[] = 'تعداد این کالا بیش از حد موجودی است';
         }
 
-        if( $sp->store_price != $this->current_price ) 
+        $isPriceChanged = $sp->store_price != $this->current_price;
+
+        $isDiscountChanged = CartHelper::checkDiscount($this->product_id, $this->current_discount);
+
+        $passDiscountChanged = false;
+
+        if($isPriceChanged)
         {
-            $diff = $sp->store_price - $this->current_price;
+            extract( CartHelper::calcDiff($sp->store_price, $this->current_price) );
 
-            $type = 'افزایش';
-
-            if( $diff < 0 ) 
+            if($diff != 0)
             {
-                $type = 'کاهش';
-                $diff = -$diff;
+                $show = true;
+                
+                $msg[] = 'این کالا به میزان ' . $diff . ' تومان ' . $type . ' قیمت داشته است.';
+            }
+        }
+
+        if($isDiscountChanged)
+        {
+            $show = true;
+
+            if($this->current_discount == null) // ( $this->current_discount != null && $this->price['applied_discount'] != null )
+            {
+                if(count($msg) == 0)
+                {
+                    $passDiscountChanged = true;
+                }
+            }
+            else 
+            {
+                if($this->price['applied_discount'] == null)
+                {
+                    $msg[] = 'تخفیف این کالا به اتمام رسیده است.';
+                }
+                else
+                {
+                    $msg[] = 'تخفیف این کالا تغییر پیدا کرده است.';
+                }
             }
 
-            $diff = number_format($diff);
-
-            $diff = str_replace(
-                ['0', '1', '2', '3', '4', '5', '6', '7', '8', '9'] , 
-                ['۰', '۱', '۲', '۳', '۴', '۵', '۶', '۷', '۸', '۹'] , 
-                (string)$diff );
-
-            $show = true;
-
-            $msg = 'این کالا به میزان ' . $diff . ' تومان ' . $type . ' قیمت داشته است.';
         }
 
         return 
         [
-            'is_show'          => $show ,
-            'message'          => $msg ,
-            'is_available'     => $sp->warehouse_count > 0 ,
-            'is_price_changed' => $sp->store_price != $this->current_price ,
-            'new_price'        => $sp->store_price ,
-            'limit'            => $sp->warehouse_count ,
+            'is_show'               => $show ,
+            'message'               => $msg ,
+            'limit'                 => $sp->warehouse_count ,
+            'is_available'          => $sp->warehouse_count > 0 ,
+            'is_price_changed'      => $isPriceChanged ,
+            'is_discount_changed'   => $isDiscountChanged ,
+            'pass_discount_changed' => $passDiscountChanged ,
+            'new_price'             => $sp->store_price ,
+            'new_discount'          => $this->price['applied_discount'] ,
         ];
     }
 
@@ -218,6 +243,8 @@ class UserCart extends Model
 
         $discountPrice = 0;
 
+        $discountApplied = null;
+
         if( $this->is_payment_cash ) 
         {
             $discountPrice = ( $originalTotalPrice / 100 ) * $sp->cash_payment_discount;
@@ -233,6 +260,8 @@ class UserCart extends Model
 
                 $isDiscount = true;
 
+                $discountApplied = "{$d->discount_type}-{$d->discount_value}-{$d->final_price}";
+
                 break;
             }
         }
@@ -244,6 +273,8 @@ class UserCart extends Model
                 $discountPrice += $d->discount_value - $d->final_price;
 
                 $isDiscount = true;
+
+                $discountApplied = "{$d->discount_type}-{$d->discount_value}-{$d->final_price}";
 
                 break;
             }
@@ -266,6 +297,7 @@ class UserCart extends Model
             'original_total'        => $originalTotalPrice ,
             'cash_payment_discount' => $cashPayDiscount ,
             'is_discount'      => $isDiscount ,
+            'applied_discount' => $discountApplied ,
             'discount_price'   => $discountPrice ,
             'discount_percent' => round($discountPercent, 1) ,
             'final'            => $finalPrice ,

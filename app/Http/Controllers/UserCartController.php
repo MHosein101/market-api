@@ -109,10 +109,10 @@ class UserCartController extends Controller
         ->where('product_id', $productId)
         ->first();
         
-        $limit = StoreProduct::find($item->product_id)->warehouse_count;
-
         if( $item != null ) 
         {
+            $limit = StoreProduct::find($item->product_id)->warehouse_count;
+
             if( $type == 'up' && $item->count + 1 <= $limit )
             {
                 $item->count += 1;
@@ -183,35 +183,43 @@ class UserCartController extends Controller
             return response()->json($factor, 200);
         }
 
-        $f = Factor::create(
-        [
-            'state'    => FactorState::Pending ,
-            'price'    => $factor['cart']['cost']['total_price'] ,
-            'discount' => $factor['cart']['cost']['discount_price'] ,
-            'ordered'  => time() ,
-            'store_id' => $storeId ,
-            'user_id'  => $request->user->id
-        ]);
-
-        foreach($factor['cart']['items'] as $item)
+        if( count($factor['cart']['items']) > 0 )
         {
-            FactorItem::create(
+            $countProducts = UserCart::currentUser()
+            ->where('store_id', $storeId)
+            ->sum('count');
+
+            $f = Factor::create(
             [
-                'count'      => $item->count ,
-                'price'      => $item->current_price ,
-                'discount'   => $item->price['discount_price'] ,
-                'factor_id'  => $f->id ,
-                'product_id' => $item->product_id ,
-                'base_product_id' => $item->base_product_id ,
+                'state'    => FactorState::Pending ,
+                'count'    => $countProducts ,
+                'price'    => $factor['cart']['cost']['total_price'] ,
+                'discount' => $factor['cart']['cost']['discount_price'] ,
+                'store_id' => $storeId ,
+                'user_id'  => $request->user->id
             ]);
 
-            StoreProduct::where('id', $item->product_id)
-            ->decrement('warehouse_count', $item->count);
-        }
+            foreach($factor['cart']['items'] as $item)
+            {
+                FactorItem::create(
+                [
+                    'state'      => FactorState::Pending ,
+                    'count'      => $item->count ,
+                    'price'      => $item->current_price ,
+                    'discount'   => $item->price['discount_price'] ,
+                    'factor_id'  => $f->id ,
+                    'store_product_id' => $item->product_id ,
+                    'base_product_id'  => $item->base_product_id ,
+                ]);
 
-        UserCart::currentUser()
-        ->where('store_id', $storeId)
-        ->delete();
+                StoreProduct::where('id', $item->product_id)
+                ->decrement('warehouse_count', $item->count);
+            }
+
+            UserCart::currentUser()
+            ->where('store_id', $storeId)
+            ->delete();
+        }
 
         return 
             response()

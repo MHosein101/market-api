@@ -29,7 +29,7 @@ class FactorItem extends Model
     protected $hidden = 
     [ 
         'factor_id',
-        'product_id',
+        'store_product_id',
         'base_product_id',
         'created_at', 'updated_at', 'deleted_at' 
     ];
@@ -51,14 +51,7 @@ class FactorItem extends Model
      */
     public function getProductAttribute() 
     {
-        $p = Product::find($this->base_product_id);
-
-        return 
-        [
-            'title'     => $p->title ,
-            'slug'      => $p->slug ,
-            'image_url' => $p->image_url ,
-        ];
+        return Product::find($this->base_product_id);
     }
     
 }

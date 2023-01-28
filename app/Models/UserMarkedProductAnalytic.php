@@ -25,10 +25,11 @@ class UserMarkedProductAnalytic extends SearchProduct
      * 
      * @return ProductPriceChart
      */
-    public function getChartAttribute() 
+    public function getPriceChartAttribute() 
     {
         return ProductPriceChart::where('product_id', $this->id)
-        ->orderby('created_at')
+        ->orderby('created_at', 'desc')
+        ->take(50)
         ->get();
     }
 
@@ -37,10 +38,11 @@ class UserMarkedProductAnalytic extends SearchProduct
      * 
      * @return ProductPriceHistory
      */
-    public function getHistoryCountAttribute() 
+    public function getPriceHistoryAttribute() 
     {
         return ProductPriceHistory::where('product_id', $this->id)
-        ->orderby('created_at')
+        ->orderby('created_at', 'desc')
+        ->take(5)
         ->get();
     }
 }

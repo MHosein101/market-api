@@ -34,6 +34,7 @@ class ProductPriceChart extends Model
      */
     protected $hidden = 
     [ 
+        'product_id',
         'created_at', 'updated_at', 'deleted_at' 
     ];
 
@@ -43,4 +44,37 @@ class ProductPriceChart extends Model
      * @var array
      */
     protected $appends = [];
+    
+    /**
+     * Process detail and create new record
+     * 
+     * @param int $productId
+     */
+    public static function customCreate($productId) 
+    {
+        $lastTime = ProductPriceChart::orderBy('created_at', 'desc')->first()->time;
+
+        $hold = 3600 * 24 * 3; // create new record every 3 days
+        $hold = 1; 
+
+        if( $lastTime + $hold >= time() )
+        {
+            $price = StoreProduct
+            ::selectRaw('product_id, MIN(store_price) as min_price, AVG(store_price) as avg_price')
+            ->where('product_id', $productId)
+            ->where('warehouse_count', '>', 0)
+            ->groupBy('product_id')
+            ->first();
+            
+            ProductPriceChart::create(
+            [
+                'time'          => time() ,
+                'min_price'     => $price->min_price ,
+                'average_price' => $price->avg_price ,
+                'product_id'    => $productId ,
+            ]);
+        }
+
+    }
+
 }

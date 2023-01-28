@@ -2,11 +2,17 @@
 
 namespace App\Http\Controllers;
 
-use App\Http\Helpers\DataHelper;
-use Illuminate\Http\Request;
-use App\Http\Helpers\SearchHelper;
+use App\Models\User;
 use App\Models\Factor;
+use App\Models\Product;
+use App\Models\FactorItem;
 use App\Models\FactorState;
+use App\Models\StoreProduct;
+use Illuminate\Http\Request;
+use App\Http\Helpers\DataHelper;
+use App\Http\Helpers\FactorHelper;
+use App\Http\Helpers\SearchHelper;
+use App\Models\StoreFactor;
 
 class StoreFactorController extends Controller
 {
@@ -22,14 +28,50 @@ class StoreFactorController extends Controller
      */ 
     public function getList(Request $request)
     {
+        $userFactors = Factor
+        ::selectRaw('id as factor_id, store_id, user_id, COUNT(id) as factors_count')
+        ->groupBy('user_id', 'store_id', 'id');
+
+        $factorItems = FactorItem
+        ::selectRaw('factor_id, base_product_id as product_id, state');
+
+        $products = Product
+        ::selectRaw('id as product_id, title, brand_id');
+        
+        $factors = StoreFactor::selectRaw('users.*')->distinct()
+
+        ->leftJoinSub($userFactors, 'u_factors', function ($join) 
+        {
+            $join->on('users.id', 'u_factors.user_id');
+        })
+
+        ->where('u_factors.factors_count', '>', 0)
+
+        ->where('u_factors.store_id', $request->user->store_id)
+
+        ->leftJoinSub($factorItems, 'f_items', function ($join) 
+        {
+            $join->on('u_factors.factor_id', 'f_items.factor_id');
+        })
+
+        ->leftJoinSub($products, 'i_products', function ($join) 
+        {
+            $join->on('f_items.product_id', 'i_products.product_id');
+        });
+
         $result = SearchHelper::dataWithFilters(
             $request->query() , 
-            Factor::class , 
-            '*' , 
+            clone $factors , 
+            null , 
             [
-                'state' => null
+                'state'        => null ,
+                'title'        => null ,
+                'brand_id'     => null ,
+                'category_id'  => null ,
+                'name'         => null ,
+                'number'       => null ,
             ] , 
-            'filterFactors'
+            'filterStoreFactors'
         );
 
         extract($result);
@@ -44,64 +86,108 @@ class StoreFactorController extends Controller
                 'message'    => $status == 200 ? 'OK' : 'No factor found.' ,
                 'count'      => $count ,
                 'pagination' => $pagination ,
-                'stores'     => $data
+                'factors'    => $data
             ]
             , 200);
     }
 
     /**
-     * Return factor's details
+     * Change factor's item state
      * 
      * @param Request $request
-     * @param int $factorId
-     * @param string $state
      * 
      * @return Response
      */ 
-    public function changeFactorState(Request $request, $factorId, $state)
+    public function changeFactorItemState(Request $request)
     {
-        $updateData = [];
+        $itemsCount = (int)$request->input('items_count', 0);
 
-        $isComment = false;
+        $state = $request->input('state');
 
-        switch($state)
+        $comment = $request->input('comment') ?? '';
+        
+        for($i = 0; $i < $itemsCount; $i++) 
         {
-            case 'accept':
+            $id = (int)$request->input("items_{$i}");
 
-                $updateData = [ 'state' => FactorState::Accepted ];
-                break;
+            $factorItem = FactorItem::find($id);
 
-            case 'reject':
+            $allowChange = false;
 
-                $updateData = [ 'state' => FactorState::Rejected ];
-                $isComment = true;
-                break;
+            $restock = false;
+    
+            $isComment = false;
+    
+            $newState = null;
+    
+            switch($state)
+            {
+                case 'accept':
+    
+                    if( $factorItem->state == FactorState::Pending )
+                    {
+                        $newState = FactorState::Accepted;
+                        $isComment = true;
+                        $allowChange = true;
+                    }
+                    break;
+    
+                case 'reject':
+    
+                    if( $factorItem->state == FactorState::Pending )
+                    {
+                        $newState = FactorState::Rejected;
+                        $isComment = true;
+                        $allowChange = true;
+                        $restock = true;
+                    }
+                    break;
+                        
+                case 'sending':
+    
+                    if( $factorItem->state == FactorState::Accepted )
+                    {
+                        $newState = FactorState::Sending;
+                        $allowChange = true;
+                    }
+                    break;
                     
-            case 'sending':
+                case 'finished':
+    
+                    if( $factorItem->state == FactorState::Sending )
+                    {
+                        $newState = FactorState::Finished;
+                        $allowChange = true;
+                    }
+                    break;
+            }
+    
+            if($allowChange)
+            {
+                $updateData = 
+                [ 
+                    'state'      => $newState ,
+                    'store_note' => $isComment ? $comment : ''
+                ];
+    
+                FactorItem::where('id', $id)->update($updateData);
+            }
 
-                $updateData = [ 'state' => FactorState::Sending ];
-                break;
-                
-            case 'finished':
-
-                $updateData = [ 'state' => FactorState::Finished ];
-                break;
+            if($restock)
+            {
+                StoreProduct::where('id', $factorItem->store_product_id)
+                ->increment('warehouse_count', $factorItem->count);
+            }
         }
-        
-        if($isComment)
-        {
-            $updateData['store_note'] = $request->input('comment') ?? '';
-        }
-        
-        Factor::where('id', $factorId)->update($updateData);
 
         return
             response()
             ->json(
             [ 
-                'status'     => 200 ,
-                'message'    => 'OK'
-            ]
+                'status'  => 200 ,
+                'message' => 'OK' ,
+                'state_changed' => $allowChange
+            ] 
             , 200);
     }
 

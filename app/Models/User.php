@@ -40,6 +40,7 @@ class User extends Authenticatable
      */
     protected $hidden = 
     [ 
+        'store_id',
         'verification_code', 
         'password', 
         'created_at', 'updated_at', 'deleted_at' 

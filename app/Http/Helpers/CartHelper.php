@@ -6,6 +6,7 @@ use App\Models\User;
 use App\Models\Store;
 use App\Models\UserCart;
 use App\Models\StoreProduct;
+use App\Models\StoreProductDiscount;
 
 /**
  * Helper methods for cart data 
@@ -25,8 +26,6 @@ class CartHelper
     public static function storesSummary()
     {
         $stores = [];
-
-        $user = User::find(request()->user->id);
 
         $storeIDs = UserCart::currentUser()
         ->distinct()
@@ -66,7 +65,6 @@ class CartHelper
 
         return 
         [
-            'user'       => $user ,
             'stores'     => $stores ,
             'cart_count' => $cart['cart_count'] ,
             'cart'       => $cart['cart'] ,
@@ -83,10 +81,6 @@ class CartHelper
      */ 
     public static function storeItems($storeId)
     {
-        $uid = request()->user->id;
-
-        $user = User::find($uid);
-
         $store = Store::find($storeId);
 
         $cart = UserCart::currentUser()
@@ -119,15 +113,34 @@ class CartHelper
                     ->delete();
                 }
 
+                $updateData = [];
+                
+                $updateChanges = false;
+
                 if( $item->state['is_price_changed'] ) 
+                {
+                    $updateData['current_price'] = $item->state['new_price'];
+
+                    $updateChanges = true;
+                }
+
+                if( $item->state['is_discount_changed'] ) 
+                {
+                    if($item->state['pass_discount_changed'])
+                    {
+                        $costs['payment_state'] = true;
+                    }
+                    
+                    $updateData['current_discount'] = $item->state['new_discount'];
+
+                    $updateChanges = true;
+                }
+
+                if($updateChanges)
                 {
                     UserCart::currentUser()
                     ->where('id', $item->id)
-                    ->update(
-                        [ 
-                            'current_price' => $item->state['new_price'] 
-                        ]
-                    );
+                    ->update($updateData);
                 }
 
             }
@@ -156,7 +169,6 @@ class CartHelper
         [
             'status'  => 200 ,
             'message' => 'OK' ,
-            'user'    => $user ,
             'store'   => 
             [
                 'id'         => $store->id ,
@@ -218,6 +230,64 @@ class CartHelper
             'cart'       => $data
         ];
 
+    }
+
+    /**
+     * Calculate diffrence value of two prices and return type of diffrence
+     * 
+     * @param int $old
+     * @param int $new
+     * 
+     * @return array
+     */ 
+    public static function calcDiff($old, $new)
+    {
+        $diff = $old - $new;
+
+        $type = 'افزایش';
+
+        if( $diff < 0 ) 
+        {
+            $type = 'کاهش';
+            $diff = -$diff;
+        }
+
+        $diff = number_format($diff);
+
+        $diff = str_replace(
+            ['0', '1', '2', '3', '4', '5', '6', '7', '8', '9'] , 
+            ['۰', '۱', '۲', '۳', '۴', '۵', '۶', '۷', '۸', '۹'] , 
+            (string)$diff );
+
+        return [
+            'type' => $type ,
+            'diff' => $diff
+        ];
+    }
+
+    /**
+     * Check if current discount of cart product changed or not
+     * 
+     * @param int $storeProductId
+     * @param string $currentDiscount
+     * 
+     * @return boolean
+     */ 
+    public static function checkDiscount($storeProductId, $currentDiscount)
+    {
+        $discounts = StoreProductDiscount::where('product_id', $storeProductId)->get();
+
+        foreach($discounts as $d)
+        {
+            $dStr = "{$d->discount_type}-{$d->discount_value}-{$d->final_price}";
+
+            if($dStr == $currentDiscount)
+            {
+                return false;
+            }
+        }
+
+        return true;
     }
     
 }

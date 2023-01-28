@@ -16,15 +16,15 @@ class CreateFactorsTable extends Migration
         Schema::create('factors', function (Blueprint $table) {
             $table->id();
 
-            $table->string('state')->default('');
-
-            $table->unsignedInteger('price')->default(0);
-            $table->unsignedInteger('discount')->default(0);
+            $table->string('state')->default('pending');
             
             $table->string('store_note')->default('');
             $table->string('user_note')->default('');
 
-            $table->integer('ordered')->default(-1);
+            $table->smallInteger('count')->default(1);
+            
+            $table->unsignedInteger('price')->default(0);
+            $table->unsignedInteger('discount')->default(0);
 
             $table->unsignedBigInteger('store_id');
             $table->unsignedBigInteger('user_id');

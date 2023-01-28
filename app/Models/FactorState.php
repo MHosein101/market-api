@@ -23,4 +23,6 @@ class FactorState
 
     const Finished = 'finished';
 
+    const Returned = 'returned';
+
 }

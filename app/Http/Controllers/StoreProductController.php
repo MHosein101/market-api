@@ -7,6 +7,7 @@ use Illuminate\Http\Request;
 use App\Http\Helpers\DataHelper;
 use App\Http\Helpers\SearchHelper;
 use App\Models\Product;
+use App\Models\ProductPriceHistory;
 use App\Models\StoreProductDiscount;
 
 /**
@@ -148,17 +149,22 @@ class StoreProductController extends Controller
             $product = StoreProduct::create($data);
 
             $productId = $product->id;
+
+            ProductPriceHistory::customCreate($product, $product->store_price, $product->warehouse_count);
         }
         else {
             $product = StoreProduct::withTrashed()->find($productId);
 
-            if( $product->production_price != $data['production_price']
-                || $product->consumer_price != $data['consumer_price']
-                || $product->store_price != $data['store_price']
-                || $product->store_price_1 != $data['store_price_1']
-                || $product->store_price_2 != $data['store_price_2'] ) {
+            if(    $product->production_price != $data['production_price']
+                || $product->consumer_price   != $data['consumer_price']
+                || $product->store_price      != $data['store_price']
+                || $product->store_price_1    != $data['store_price_1']
+                || $product->store_price_2    != $data['store_price_2'] ) 
+            {
                     
-                    $data['price_update_time'] = time();
+                $data['price_update_time'] = time();
+                
+                ProductPriceHistory::customCreate($product, $data['store_price'], $data['warehouse_count']);
              }
 
             StoreProduct::withTrashed()
@@ -170,8 +176,7 @@ class StoreProductController extends Controller
         
         $discountsCount = (int)$request->post("discounts_count", 0);
         
-        if($discountsCount > 0)
-            StoreProductDiscount::where('product_id', $productId)->delete();
+        StoreProductDiscount::where('product_id', $productId)->delete();
 
         for($i = 0; $i < $discountsCount; $i++) {
 

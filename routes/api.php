@@ -69,6 +69,8 @@ Route::controller(AuthController::class)->group(function()
     Route::post('signup/{type}', 'signup');
     Route::post('login/credentials', 'loginCredentials');
 
+    Route::get ('numbers', 'getNumbers');
+
     Route::post('login', 'loginByCode');
     Route::post('verify', 'codeVerification');
 });
@@ -195,7 +197,7 @@ Route::group(
         Route::controller(StoreFactorController::class)->group(function() 
         {
             Route::get('factors', 'getList');
-            Route::put('factors/{factorId}/{state}', 'changeFactorState');
+            Route::put('factors/items/state', 'changeFactorItemState');
         });
     });
 });
