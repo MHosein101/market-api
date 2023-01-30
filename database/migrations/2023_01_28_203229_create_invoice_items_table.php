@@ -4,7 +4,7 @@ use Illuminate\Database\Migrations\Migration;
 use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Support\Facades\Schema;
 
-class CreateFactorItemsTable extends Migration
+class CreateInvoiceItemsTable extends Migration
 {
     /**
      * Run the migrations.
@@ -13,20 +13,24 @@ class CreateFactorItemsTable extends Migration
      */
     public function up()
     {
-        Schema::create('factor_items', function (Blueprint $table) {
+        Schema::create('invoice_items', function (Blueprint $table) {
             $table->id();
-            
+
             $table->string('state')->default('pending');
             
-            $table->string('store_note')->default('');
-            $table->string('user_note')->default('');
+            $table->string('store_comment')->default('');
+            $table->string('user_comment')->default('');
             
-            $table->smallInteger('count')->default(1);
-            $table->unsignedInteger('price')->default(0);
-            $table->unsignedInteger('discount')->default(0);
+            $table->smallInteger('count');
+            $table->unsignedInteger('price');
+            $table->unsignedInteger('discount');
+            
+            $table->unsignedInteger('tax')->default(0);
 
-            $table->unsignedBigInteger('factor_id');
+            $table->unsignedBigInteger('invoice_id');
+
             $table->unsignedBigInteger('store_product_id');
+
             $table->unsignedBigInteger('base_product_id');
 
             $table->timestamps();
@@ -41,6 +45,6 @@ class CreateFactorItemsTable extends Migration
      */
     public function down()
     {
-        Schema::dropIfExists('factor_items');
+        Schema::dropIfExists('invoice_items');
     }
 }

@@ -8,9 +8,9 @@ use App\Models\UserCart;
 use App\Models\StoreProduct;
 use Illuminate\Http\Request;
 use App\Http\Helpers\CartHelper;
-use App\Models\Factor;
-use App\Models\FactorItem;
-use App\Models\FactorState;
+use App\Models\Invoice;
+use App\Models\InvoiceItem;
+use App\Models\InvoiceState;
 
 /**
  * User shopping cart management
@@ -67,7 +67,7 @@ class UserCartController extends Controller
      * Add store product to the cart
      *
      * @param Request $request
-     * @param int $productId
+     * @param int $storeProductId
      * 
      * @return Response
      */ 
@@ -165,49 +165,68 @@ class UserCartController extends Controller
     }
 
     /**
-     * Create new factor from cart items 
+     * Create new invoice from cart items 
      *
      * @param Request $request
      * @param int $storeId
      * 
      * @return Response
      */ 
-    public function createFactor(Request $request, $storeId)
+    public function createInvoice(Request $request, $storeId)
     {
-        $factor = CartHelper::storeItems($storeId);
+        $preInvoice = CartHelper::storeItems($storeId);
 
-        if( ! $factor['cart']['cost']['payment_state'] )
+        if( ! $preInvoice['cart']['cost']['payment_state'] )
         {
-            $factor['factor_state'] = false;
+            $preInvoice['factor_state'] = false; // change to invoice_state
 
-            return response()->json($factor, 200);
+            return response()->json($preInvoice, 200);
         }
 
-        if( count($factor['cart']['items']) > 0 )
+        if( count($preInvoice['cart']['items']) > 0 )
         {
             $countProducts = UserCart::currentUser()
             ->where('store_id', $storeId)
             ->sum('count');
 
-            $f = Factor::create(
+            $trackingNumber = 0;
+
+            do 
+            {
+                $trackingNumber = random_int(10000, 99999);
+            } 
+            while ( Invoice::where('tracking_number', $trackingNumber)->first() );
+
+            $billNumber = 0;
+
+            do 
+            {
+                $billNumber = random_int(1000000, 9999999);
+            } 
+            while ( Invoice::where('bill_number', $billNumber)->first() );
+
+            $v = Invoice::create(
             [
-                'state'    => FactorState::Pending ,
-                'count'    => $countProducts ,
-                'price'    => $factor['cart']['cost']['total_price'] ,
-                'discount' => $factor['cart']['cost']['discount_price'] ,
-                'store_id' => $storeId ,
-                'user_id'  => $request->user->id
+                'state'           => InvoiceState::Pending ,
+                'items_count'     => $countProducts ,
+                'total_price'     => $preInvoice['cart']['cost']['total_price'] ,
+                'total_discount'  => $preInvoice['cart']['cost']['discount_price'] ,
+                'tracking_number' => $trackingNumber ,
+                'bill_number'     => $billNumber ,
+                'billed_date'     => time() ,
+                'store_id'        => $storeId ,
+                'user_id'         => $request->user->id
             ]);
 
-            foreach($factor['cart']['items'] as $item)
+            foreach($preInvoice['cart']['items'] as $item)
             {
-                FactorItem::create(
+                InvoiceItem::create(
                 [
-                    'state'      => FactorState::Pending ,
+                    'state'      => InvoiceState::Pending ,
                     'count'      => $item->count ,
                     'price'      => $item->current_price ,
                     'discount'   => $item->price['discount_price'] ,
-                    'factor_id'  => $f->id ,
+                    'invoice_id' => $v->id ,
                     'store_product_id' => $item->product_id ,
                     'base_product_id'  => $item->base_product_id ,
                 ]);
@@ -226,8 +245,8 @@ class UserCartController extends Controller
             ->json(
             [
                 'status'  => 201 ,
-                'message' => 'Factor created.' ,
-                'factor_state' => true
+                'message' => 'Invoice created.' ,
+                'factor_state' => true //  // change to invoice_state
             ], 201);
     }
 

@@ -4,11 +4,11 @@ namespace App\Models;
 
 
 /**
- * Constant values factor states
+ * Constant values invoices states
  * 
  * @author Hosein marzban
  */
-class FactorState 
+class InvoiceState 
 {
 
     const Pending = 'pending';

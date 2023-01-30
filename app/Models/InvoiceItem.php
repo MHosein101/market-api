@@ -6,7 +6,7 @@ use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\SoftDeletes;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 
-class Factor extends Model
+class InvoiceItem extends Model
 {
     /**
      * Adds a deleted_at column to model's table
@@ -27,13 +27,15 @@ class Factor extends Model
      * @var array
      */
     protected $hidden = 
-    [
+    [ 
+        'id',
         'state',
-        'store_note',
-        'user_note',
-        'user_id',
-        'store_id',
-        'ordered',
+        'store_comment',
+        'user_comment',
+        'tax',
+        'invoice_id',
+        'store_product_id',
+        'base_product_id',
         'created_at', 'updated_at', 'deleted_at' 
     ];
 
@@ -44,17 +46,16 @@ class Factor extends Model
      */
     protected $appends = 
     [
-        'items'
+        'product'
     ];
-
+    
     /**
-     * Return items related in this factor
+     * Return item's base product info
      * 
-     * @return FactorItem[]
+     * @return Product
      */
-    public function getItemsAttribute() 
+    public function getProductAttribute() 
     {
-        return FactorItem::where('factor_id', $this->id)->get();
+        return Product::find($this->base_product_id);
     }
-
 }

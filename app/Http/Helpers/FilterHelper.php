@@ -5,7 +5,7 @@ namespace App\Http\Helpers;
 use App\Models\User;
 use App\Models\Brand;
 use App\Models\Category;
-use App\Models\FactorState;
+use App\Models\InvoiceState;
 use App\Models\Product;
 use App\Models\SearchProduct;
 use App\Models\ProductCategory;
@@ -281,26 +281,26 @@ class FilterHelper
     }
 
     /**
-     * Add categories filters to query builder
+     * Add invoices filters to query builder
      *
      * @param QueryBuilder $qbuilder
      * @param array $query
      * 
      * @return QueryBuilder
      */ 
-    public static function filterStoreFactors($qbuilder, $query) 
+    public static function filterStoreInvoices($qbuilder, $query) 
     {
         if( $query['state'] != null )
         {
             switch($query['state'])
             {
-                case FactorState::Pending:
-                case FactorState::Accepted:
-                case FactorState::Rejected:
-                case FactorState::Sending:
-                case FactorState::Finished:
-                case FactorState::Canceled:
-                case FactorState::Returned:
+                case InvoiceState::Pending:
+                case InvoiceState::Accepted:
+                case InvoiceState::Rejected:
+                case InvoiceState::Sending:
+                case InvoiceState::Finished:
+                case InvoiceState::Canceled:
+                case InvoiceState::Returned:
 
                     $qbuilder->where('state', $query['state']);
                     break;

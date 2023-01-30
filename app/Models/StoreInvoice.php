@@ -13,11 +13,11 @@ use Illuminate\Database\Eloquent\Casts\Attribute;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 
 /**
- * Model to work with users table
+ * View model for store invoices group by users
  * 
  * @author Hosein Marzban
  */
-class StoreFactor extends User
+class StoreInvoice extends User
 {
     /**
      * The table associated with the model.
@@ -54,7 +54,7 @@ class StoreFactor extends User
      */
     protected $appends = 
     [ 
-        'factors',
+        'invoices',
         'address', 
         'is_password', 
         'is_profile_image', 
@@ -67,9 +67,9 @@ class StoreFactor extends User
      * 
      * @return Factor[]
      */
-    public function getFactorsAttribute() 
+    public function getInvoicesAttribute() 
     {
-        return Factor::where('user_id', $this->id)->get();
+        return Invoice::where('user_id', $this->id)->get();
     }
 
 }

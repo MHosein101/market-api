@@ -61,7 +61,8 @@ class PublicSearchHelper
 
         $keys = array_keys($categories);
         
-        $list = [ 
+        $list = 
+        [ 
             [ 
                 'type'  => 'unavailable', 
                 'title' => 'زیر دسته ای وجود ندارد' 
@@ -107,6 +108,11 @@ class PublicSearchHelper
                 }
 
                 $categories[$k]['is_list'] = true;
+
+                if( count($subs) > 0 )
+                {
+                    $list = [];
+                }
 
                 foreach($subs as $s) 
                 {

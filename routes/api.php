@@ -10,7 +10,7 @@ use App\Http\Controllers\AuthController;
 use App\Http\Controllers\PublicProductController;
 use App\Http\Controllers\PublicSearchController;
 use App\Http\Controllers\StoreController;
-use App\Http\Controllers\StoreFactorController;
+use App\Http\Controllers\StoreInvoiceController;
 use App\Http\Controllers\StoreProductController;
 use App\Http\Controllers\UserActivityController;
 use App\Http\Controllers\UserCartController;
@@ -109,7 +109,7 @@ Route::group(
         Route::put   ('cart/store/{storeId}/product/{productId}/{type}/{isFactor?}', 'updateItemCount');
         Route::delete('cart/store/{storeId}', 'deleteStoreItems');
 
-        Route::post  ('factor/{storeId}', 'createFactor');
+        Route::post  ('invoice/{storeId}', 'createInvoice');
     });
 });
 Route::group(
@@ -194,10 +194,11 @@ Route::group(
             
             Route::put ('products/{productId}/state', 'changeProductState');
         });
-        Route::controller(StoreFactorController::class)->group(function() 
+        Route::controller(StoreInvoiceController::class)->group(function() 
         {
-            Route::get('factors', 'getList');
-            Route::put('factors/items/state', 'changeFactorItemState');
+            Route::get('invoices', 'getList');
+
+            Route::put('invoices/{invoiceId}/state', 'changeState');
         });
     });
 });

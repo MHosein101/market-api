@@ -126,9 +126,16 @@ class User extends Authenticatable
      */
     public function getAddressAttribute() 
     {
-        $adds = UserAddress::where('user_id', $this->id)->first();
+        $address = UserAddress::where('user_id', $this->id)->first();
 
-        return $adds == null  ? [] : $adds ;
+        return $address 
+        ?? 
+        [
+            'province'  => '' ,
+            'city'      => '' ,
+            'detail'    => '' ,
+            'post_code' => '' ,
+        ];
     }
     
     /**

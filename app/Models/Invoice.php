@@ -6,7 +6,7 @@ use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\SoftDeletes;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 
-class FactorItem extends Model
+class Invoice extends Model
 {
     /**
      * Adds a deleted_at column to model's table
@@ -27,10 +27,9 @@ class FactorItem extends Model
      * @var array
      */
     protected $hidden = 
-    [ 
-        'factor_id',
-        'store_product_id',
-        'base_product_id',
+    [
+        'user_id',
+        'store_id',
         'created_at', 'updated_at', 'deleted_at' 
     ];
 
@@ -41,17 +40,36 @@ class FactorItem extends Model
      */
     protected $appends = 
     [
-        'product'
+        'items'
     ];
-    
+
     /**
-     * Return item's base product info
+     * Override state value to persian
      * 
-     * @return Product
+     * @return string
      */
-    public function getProductAttribute() 
+    public function getStateAttribute($value) 
     {
-        return Product::find($this->base_product_id);
+        $persian =
+        [
+            'pending'  => 'در حال بررسی' ,
+            'accepted' => 'تایید شده' ,
+            'rejected' => 'رد شده' ,
+            'canceled' => 'کنسل شده (توسط کاربر)' ,
+            'sending'  => 'در حال ارسال' ,
+            'finished' => 'ارسال شده' ,
+        ];
+
+        return $persian[$value];
     }
-    
+
+    /**
+     * Return items related to this invoice
+     * 
+     * @return InvoiceItem[]
+     */
+    public function getItemsAttribute() 
+    {
+        return InvoiceItem::where('invoice_id', $this->id)->get();
+    }
 }
