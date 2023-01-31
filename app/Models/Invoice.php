@@ -40,27 +40,28 @@ class Invoice extends Model
      */
     protected $appends = 
     [
+        'state_persian',
         'items'
     ];
 
     /**
-     * Override state value to persian
+     * Translate state value to persian
      * 
      * @return string
      */
-    public function getStateAttribute($value) 
+    public function getStatePersianAttribute() 
     {
         $persian =
         [
-            'pending'  => 'در حال بررسی' ,
-            'accepted' => 'تایید شده' ,
-            'rejected' => 'رد شده' ,
-            'canceled' => 'کنسل شده (توسط کاربر)' ,
-            'sending'  => 'در حال ارسال' ,
-            'finished' => 'ارسال شده' ,
+            InvoiceState::Pending  => 'در حال بررسی' ,
+            InvoiceState::Accepted => 'تایید شده' ,
+            InvoiceState::Rejected => 'رد شده' ,
+            InvoiceState::Canceled => 'کنسل شده (توسط کاربر)' ,
+            InvoiceState::Sending  => 'در حال ارسال' ,
+            InvoiceState::Finished => 'ارسال شده' ,
         ];
 
-        return $persian[$value];
+        return $persian[$this->state];
     }
 
     /**

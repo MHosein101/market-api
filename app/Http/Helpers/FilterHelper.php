@@ -320,6 +320,7 @@ class FilterHelper
         if( $query['number'] != null ) 
         {
             $n = $query['number'];
+
             $qbuilder = $qbuilder
             ->where(function($qb) use ($n) 
             {
@@ -329,28 +330,62 @@ class FilterHelper
             });
         }
         
-        if( $query['brand_id'] != null ) 
+        foreach(['brand_id', 'category_id'] as $field) 
         {
-            $qbuilder = $qbuilder->where('brand_id','LIKE', $query['brand_id']);
-        }
-
-        if( $query['category_id'] != null )
-        {
-            $categories = ProductCategory
-            ::selectRaw('product_id, category_id')
-            ->where('category_id', $query['category_id']);
-
-            $qbuilder = $qbuilder
-            
-            ->leftJoinSub($categories, 'p_categories', function ($join) 
+            if( $query[$field] != null ) 
             {
-                $join->on('i_products.product_id', 'p_categories.product_id');
-            })
-
-            ->where('category_id', $query['category_id']);
+                $qbuilder = $qbuilder->where($field, $query[$field]);
+            }
         }
 
         return $qbuilder;
     }
+
+    /**
+     * Add invoices filters to query builder
+     *
+     * @param QueryBuilder $qbuilder
+     * @param array $query
+     * 
+     * @return QueryBuilder
+     */ 
+    public static function filterUserInvoices($qbuilder, $query) 
+    {
+        if( $query['state'] != null )
+        {
+            switch($query['state'])
+            {
+                case InvoiceState::Pending:
+                case InvoiceState::Accepted:
+                case InvoiceState::Rejected:
+                case InvoiceState::Sending:
+                case InvoiceState::Finished:
+                case InvoiceState::Canceled:
+                case InvoiceState::Returned:
+
+                    $qbuilder->where('state', $query['state']);
+                    break;
+            }
+        }
+        
+        foreach(['name', 'title'] as $field) 
+        {
+            if( $query[$field] != null ) 
+            {
+                $qbuilder = $qbuilder->where($field,'LIKE', "%{$query[$field]}%");
+            }
+        }
+        
+        foreach(['brand_id', 'category_id'] as $field) 
+        {
+            if( $query[$field] != null ) 
+            {
+                $qbuilder = $qbuilder->where($field, $query[$field]);
+            }
+        }
+
+        return $qbuilder;
+    }
+
 
 }

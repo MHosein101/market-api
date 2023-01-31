@@ -41,6 +41,9 @@ class StoreInvoice extends User
      */
     protected $hidden = 
     [ 
+        'id',
+        'account_type',
+        'national_code',
         'store_id',
         'verification_code', 
         'password', 
@@ -54,22 +57,7 @@ class StoreInvoice extends User
      */
     protected $appends = 
     [ 
-        'invoices',
         'address', 
-        'is_password', 
-        'is_profile_image', 
-        'is_active', 
-        'is_pending' 
     ];
-
-    /**
-     * Return user factors
-     * 
-     * @return Factor[]
-     */
-    public function getInvoicesAttribute() 
-    {
-        return Invoice::where('user_id', $this->id)->get();
-    }
 
 }

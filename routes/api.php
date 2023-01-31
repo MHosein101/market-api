@@ -15,6 +15,7 @@ use App\Http\Controllers\StoreProductController;
 use App\Http\Controllers\UserActivityController;
 use App\Http\Controllers\UserCartController;
 use App\Http\Controllers\UserController;
+use App\Http\Controllers\UserInvoiceController;
 
 /*
 |--------------------------------------------------------------------------
@@ -111,6 +112,12 @@ Route::group(
 
         Route::post  ('invoice/{storeId}', 'createInvoice');
     });
+    Route::controller(UserInvoiceController::class)->group(function() 
+    {
+        Route::get('invoices', 'getList');
+
+        Route::put('invoices/{invoiceId}/state', 'changeState');
+    });
 });
 Route::group(
     [ 
@@ -197,7 +204,6 @@ Route::group(
         Route::controller(StoreInvoiceController::class)->group(function() 
         {
             Route::get('invoices', 'getList');
-
             Route::put('invoices/{invoiceId}/state', 'changeState');
         });
     });

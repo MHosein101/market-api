@@ -2,21 +2,20 @@
 
 namespace App\Http\Controllers;
 
-use App\Models\User;
 use App\Models\Invoice;
 use App\Models\Product;
 use App\Models\InvoiceItem;
+use App\Models\UserInvoice;
 use App\Models\InvoiceState;
-use App\Models\StoreInvoice;
 use App\Models\StoreProduct;
 use Illuminate\Http\Request;
 use App\Models\ProductCategory;
 use App\Http\Helpers\SearchHelper;
 
-class StoreInvoiceController extends Controller
+class UserInvoiceController extends Controller
 {
     /**
-     * Return all store's invoices with filter
+     * Return all user's invoices with filter
      * 
      * @see SearchHelper::dataWithFilters(array, QueryBuilder, string|null, array, string|null) : Model[]
      * 
@@ -26,7 +25,7 @@ class StoreInvoiceController extends Controller
      */ 
     public function getList(Request $request)
     {
-        $usersInvoices = Invoice
+        $storesInvoices = Invoice
         ::selectRaw('id as invoice_id, store_id, user_id, state, COUNT(id) as invoices_count, created_at')
         ->groupBy('user_id', 'store_id', 'id', 'state', 'created_at');
 
@@ -39,22 +38,22 @@ class StoreInvoiceController extends Controller
         $categories = ProductCategory
         ::selectRaw('product_id, category_id');
         
-        $users = StoreInvoice::selectRaw('u_invoices.user_id, u_invoices.invoice_id, u_invoices.created_at')
+        $stores = UserInvoice::selectRaw('s_invoices.store_id, s_invoices.invoice_id, s_invoices.created_at')
         
         ->distinct()
 
-        ->leftJoinSub($usersInvoices, 'u_invoices', function ($join) 
+        ->leftJoinSub($storesInvoices, 's_invoices', function ($join) 
         {
-            $join->on('users.id', 'u_invoices.user_id');
+            $join->on('stores.id', 's_invoices.store_id');
         })
 
-        ->where('u_invoices.invoices_count', '>', 0)
+        ->where('s_invoices.invoices_count', '>', 0)
 
-        ->where('u_invoices.store_id', $request->user->store_id)
+        ->where('s_invoices.user_id', $request->user->id)
 
         ->leftJoinSub($invoiceItems, 'v_items', function ($join) 
         {
-            $join->on('u_invoices.invoice_id', 'v_items.invoice_id');
+            $join->on('s_invoices.invoice_id', 'v_items.invoice_id');
         })
 
         ->leftJoinSub($products, 'i_products', function ($join) 
@@ -69,7 +68,7 @@ class StoreInvoiceController extends Controller
 
         $result = SearchHelper::dataWithFilters(
             $request->query() , 
-            clone $users , 
+            clone $stores , 
             null , 
             [
                 'state'        => null ,
@@ -77,42 +76,41 @@ class StoreInvoiceController extends Controller
                 'brand_id'     => null ,
                 'category_id'  => null ,
                 'name'         => null ,
-                'number'       => null ,
             ] , 
-            'filterStoreInvoices'
+            'filterUserInvoices'
         );
 
         extract($result);
 
-        $usersIds = [];
+        $storesIds = [];
 
         foreach($data as $d)
         {
-            $usersIds[] = $d->user_id;
+            $storesIds[] = $d->store_id;
         }
 
-        $usersIds = array_values( array_unique($usersIds) );
+        $storesIds = array_values( array_unique($storesIds) );
 
-        $usersInvoicesIds = [];
+        $storesInvoicesIds = [];
         
-        foreach($usersIds as $uid)
+        foreach($storesIds as $sid)
         {
-            $usersInvoicesIds[$uid] = [];
+            $storesInvoicesIds[$sid] = [];
 
             foreach($data as $d)
             {
-                if( $uid == $d->user_id )
+                if( $sid == $d->store_id )
                 {
-                    $usersInvoicesIds[$uid][] = $d->invoice_id;
+                    $storesInvoicesIds[$sid][] = $d->invoice_id;
                 }
             }
         }
 
         $data = [];
 
-        foreach($usersInvoicesIds as $uid => $iids)
+        foreach($storesInvoicesIds as $sid => $iids)
         {
-            $user = StoreInvoice::find($uid);
+            $store = UserInvoice::find($sid);
 
             $invoices = [];
             
@@ -121,9 +119,9 @@ class StoreInvoiceController extends Controller
                 $invoices[] = Invoice::find($i);
             }
 
-            $user->invoices = $invoices;
+            $store->invoices = $invoices;
             
-            $data[] = $user;
+            $data[] = $store;
         }
 
         $status = count($data) > 0 ? 200 : 204;
@@ -136,7 +134,7 @@ class StoreInvoiceController extends Controller
                 'message'    => $status == 200 ? 'OK' : 'No invoices found.' ,
                 'count'      => $count ,
                 'pagination' => $pagination ,
-                'users'      => $data ,
+                'stores'     => $data
             ]
             , 200);
     }
@@ -151,63 +149,22 @@ class StoreInvoiceController extends Controller
      */ 
     public function changeState(Request $request, $invoiceId)
     {
-        $state = $request->input('state');
-
-        $comment = $request->input('comment') ?? '';
-        
         $invoice = Invoice::find($invoiceId);
 
-        switch($state)
+        if( $request->input('state') == 'cancel' && $invoice->state == InvoiceState::Pending )
         {
-            case 'accept':
+            $invoice->state = InvoiceState::Canceled;
+            $invoice->user_comment = $request->input('comment') ?? '';
+            $invoice->save();
 
-                if( $invoice->state == InvoiceState::Pending )
-                {
-                    $invoice->state = InvoiceState::Accepted;
-                    $invoice->store_comment = $comment;
-                    $invoice->save();
-                }
-                break;
-
-            case 'reject':
-
-                if( $invoice->state == InvoiceState::Pending )
-                {
-                    $invoice->state = InvoiceState::Rejected;
-                    $invoice->store_comment = $comment;
-                    $invoice->save();
-
-                    foreach($invoice->items as $item)
-                    {
-                        StoreProduct::where('id', $item->store_product_id)
-                        ->increment('warehouse_count', $item->count);
-                    }
-                }
-                break;
-                    
-            case 'sending':
-
-                if( $invoice->state == InvoiceState::Accepted )
-                {
-                    $invoice->state = InvoiceState::Sending;
-                    $invoice->store_comment = $comment;
-                    $invoice->save();
-                }
-                break;
-                
-            case 'finished':
-
-                if( $invoice->state == InvoiceState::Sending )
-                {
-                    $invoice->state = InvoiceState::Finished;
-                    $invoice->store_comment = $comment;
-                    $invoice->save();
-                }
-                break;
+            foreach($invoice->items as $item)
+            {
+                StoreProduct::where('id', $item->store_product_id)
+                ->increment('warehouse_count', $item->count);
+            }
         }
 
         return $this->getList($request);
     }
 
-    
 }
