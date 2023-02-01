@@ -35,8 +35,6 @@ class UserInvoice extends Store
         'bank_sheba_number', 
         'minimum_shopping_count', 
         'minimum_shopping_unit', 
-        'warehouse_address', 
-        'warehouse_number', 
         'banner_image', 
         'license_image', 
         'admin_confirmed', 

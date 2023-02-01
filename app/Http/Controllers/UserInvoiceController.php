@@ -39,9 +39,7 @@ class UserInvoiceController extends Controller
         $categories = ProductCategory
         ::selectRaw('product_id, category_id');
         
-        $stores = UserInvoice::selectRaw('s_invoices.store_id, s_invoices.invoice_id, s_invoices.created_at')
-        
-        ->distinct()
+        $qbuilder = UserInvoice::distinct()
 
         ->leftJoinSub($storesInvoices, 's_invoices', function ($join) 
         {
@@ -67,9 +65,17 @@ class UserInvoiceController extends Controller
             $join->on('i_products.product_id', 'p_categories.product_id');
         });
 
-        $result = SearchHelper::dataWithFilters(
-            $request->query() , 
-            clone $stores , 
+        $invoicesqbuilder = clone $qbuilder;
+        $invoicesqbuilder = $invoicesqbuilder->selectRaw('s_invoices.store_id, s_invoices.invoice_id, s_invoices.created_at');
+
+        $invoicesFilters = $request->query();
+
+        unset($invoicesFilters['page']);
+        unset($invoicesFilters['limit']);
+
+        $invoicesList = SearchHelper::dataWithFilters(
+            $invoicesFilters , 
+            clone $invoicesqbuilder , 
             null , 
             [
                 'state'        => null ,
@@ -78,14 +84,36 @@ class UserInvoiceController extends Controller
                 'category_id'  => null ,
                 'name'         => null ,
             ] , 
-            'filterUserInvoices'
+            'filterUserInvoices' ,
+            true
         );
 
-        extract($result);
+        $storesqbuilder = clone $qbuilder;
+        $storesqbuilder = $storesqbuilder->selectRaw('s_invoices.store_id');
+        
+        $storesFilters = $request->query();
+
+        unset($storesFilters['order']);
+
+        $storesList = SearchHelper::dataWithFilters(
+            $storesFilters , 
+            clone $storesqbuilder , 
+            null , 
+            [
+                'state'        => null ,
+                'title'        => null ,
+                'brand_id'     => null ,
+                'category_id'  => null ,
+                'name'         => null ,
+
+                'order'        => null
+            ] , 
+            'filterUserInvoices' ,
+        );
 
         $storesIds = [];
 
-        foreach($data as $d)
+        foreach($invoicesList as $d)
         {
             $storesIds[] = $d->store_id;
         }
@@ -98,7 +126,7 @@ class UserInvoiceController extends Controller
         {
             $storesInvoicesIds[$sid] = [];
 
-            foreach($data as $d)
+            foreach($invoicesList as $d)
             {
                 if( $sid == $d->store_id )
                 {
@@ -109,20 +137,30 @@ class UserInvoiceController extends Controller
 
         $data = [];
 
+        $storesIds = [];
+
+        foreach($storesList['data'] as $i)
+        {
+            $storesIds[] = $i->store_id;
+        }
+
         foreach($storesInvoicesIds as $sid => $iids)
         {
-            $store = UserInvoice::find($sid);
-
-            $invoices = [];
-            
-            foreach($iids as $i)
+            if( in_array($sid, $storesIds) )
             {
-                $invoices[] = InvoiceU::find($i);
-            }
+                $user = UserInvoice::find($sid);
 
-            $store->invoices = $invoices;
-            
-            $data[] = $store;
+                $invoices = [];
+                
+                foreach($iids as $i)
+                {
+                    $invoices[] = InvoiceU::find($i);
+                }
+
+                $user->invoices = $invoices;
+                
+                $data[] = $user;
+            }
         }
 
         $status = count($data) > 0 ? 200 : 204;
@@ -133,8 +171,8 @@ class UserInvoiceController extends Controller
             [ 
                 'status'     => $status ,
                 'message'    => $status == 200 ? 'OK' : 'No invoices found.' ,
-                'count'      => $count ,
-                'pagination' => $pagination ,
+                'count'      => $storesList['count'] ,
+                'pagination' => $storesList['pagination'] ,
                 'stores'     => $data
             ]
             , 200);
