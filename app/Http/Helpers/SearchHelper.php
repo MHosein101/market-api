@@ -55,10 +55,11 @@ class SearchHelper
      * @param string|null $select
      * @param array $filterParams
      * @param string|null $filterFunction
+     * @param boolean $skipPagination
      * 
      * @return Model[]
      */ 
-    public static function dataWithFilters($queryString, $class, $select = '*', $filterParams = [], $filterFunction = null) 
+    public static function dataWithFilters($queryString, $class, $select = '*', $filterParams = [], $filterFunction = null, $skipPagination = false) 
     {
         $defaultParams = 
         [
@@ -97,6 +98,16 @@ class SearchHelper
             $qbuilder = FilterHelper::$filterFunction(clone $qbuilder, $query);
         }
 
+        if($query['order'] != null)
+        {
+            $qbuilder = $qbuilder->orderBy('created_at', $query['order']);
+        }
+
+        if($skipPagination)
+        {
+            return $qbuilder->get();
+        }
+
         $count = clone $qbuilder;
 
         $count = count( $count->get() );
@@ -106,11 +117,6 @@ class SearchHelper
         $take = $query["limit"];
 
         $skip = ( $query["page"] - 1 ) * $query["limit"];
-
-        if($query['order'] != null)
-        {
-            $qbuilder = $qbuilder->orderBy('created_at', $query['order']);
-        }
 
         $data = $qbuilder
         ->skip($skip)

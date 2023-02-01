@@ -12,6 +12,7 @@ use App\Models\StoreProduct;
 use Illuminate\Http\Request;
 use App\Models\ProductCategory;
 use App\Http\Helpers\SearchHelper;
+use App\Models\InvoiceS;
 
 class StoreInvoiceController extends Controller
 {
@@ -39,9 +40,7 @@ class StoreInvoiceController extends Controller
         $categories = ProductCategory
         ::selectRaw('product_id, category_id');
         
-        $users = StoreInvoice::selectRaw('u_invoices.user_id, u_invoices.invoice_id, u_invoices.created_at')
-        
-        ->distinct()
+        $qbuilder = StoreInvoice::distinct()
 
         ->leftJoinSub($usersInvoices, 'u_invoices', function ($join) 
         {
@@ -67,9 +66,17 @@ class StoreInvoiceController extends Controller
             $join->on('i_products.product_id', 'p_categories.product_id');
         });
 
-        $result = SearchHelper::dataWithFilters(
-            $request->query() , 
-            clone $users , 
+        $invoicesqbuilder = clone $qbuilder;
+        $invoicesqbuilder = $invoicesqbuilder->selectRaw('u_invoices.user_id, u_invoices.invoice_id, u_invoices.created_at');
+
+        $invoicesFilters = $request->query();
+
+        unset($invoicesFilters['page']);
+        unset($invoicesFilters['limit']);
+
+        $invoicesList = SearchHelper::dataWithFilters(
+            $invoicesFilters , 
+            clone $invoicesqbuilder , 
             null , 
             [
                 'state'        => null ,
@@ -79,14 +86,37 @@ class StoreInvoiceController extends Controller
                 'name'         => null ,
                 'number'       => null ,
             ] , 
-            'filterStoreInvoices'
+            'filterStoreInvoices' ,
+            true
         );
 
-        extract($result);
+        $usersqbuilder = clone $qbuilder;
+        $usersqbuilder = $usersqbuilder->selectRaw('u_invoices.user_id');
+        
+        $usersFilters = $request->query();
+
+        unset($usersFilters['order']);
+
+        $usersList = SearchHelper::dataWithFilters(
+            $usersFilters , 
+            clone $usersqbuilder , 
+            null , 
+            [
+                'state'        => null ,
+                'title'        => null ,
+                'brand_id'     => null ,
+                'category_id'  => null ,
+                'name'         => null ,
+                'number'       => null ,
+
+                'order'        => null
+            ] , 
+            'filterStoreInvoices' ,
+        );
 
         $usersIds = [];
 
-        foreach($data as $d)
+        foreach($invoicesList as $d)
         {
             $usersIds[] = $d->user_id;
         }
@@ -99,7 +129,7 @@ class StoreInvoiceController extends Controller
         {
             $usersInvoicesIds[$uid] = [];
 
-            foreach($data as $d)
+            foreach($invoicesList as $d)
             {
                 if( $uid == $d->user_id )
                 {
@@ -110,20 +140,30 @@ class StoreInvoiceController extends Controller
 
         $data = [];
 
+        $usersIds = [];
+
+        foreach($usersList['data'] as $i)
+        {
+            $usersIds[] = $i->user_id;
+        }
+
         foreach($usersInvoicesIds as $uid => $iids)
         {
-            $user = StoreInvoice::find($uid);
-
-            $invoices = [];
-            
-            foreach($iids as $i)
+            if( in_array($uid, $usersIds) )
             {
-                $invoices[] = Invoice::find($i);
-            }
+                $user = StoreInvoice::find($uid);
 
-            $user->invoices = $invoices;
-            
-            $data[] = $user;
+                $invoices = [];
+                
+                foreach($iids as $i)
+                {
+                    $invoices[] = InvoiceS::find($i);
+                }
+
+                $user->invoices = $invoices;
+                
+                $data[] = $user;
+            }
         }
 
         $status = count($data) > 0 ? 200 : 204;
@@ -134,8 +174,8 @@ class StoreInvoiceController extends Controller
             [ 
                 'status'     => $status ,
                 'message'    => $status == 200 ? 'OK' : 'No invoices found.' ,
-                'count'      => $count ,
-                'pagination' => $pagination ,
+                'count'      => $usersList['count'] ,
+                'pagination' => $usersList['pagination'] ,
                 'users'      => $data ,
             ]
             , 200);

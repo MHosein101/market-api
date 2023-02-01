@@ -11,6 +11,7 @@ use App\Models\StoreProduct;
 use Illuminate\Http\Request;
 use App\Models\ProductCategory;
 use App\Http\Helpers\SearchHelper;
+use App\Models\InvoiceU;
 
 class UserInvoiceController extends Controller
 {
@@ -116,7 +117,7 @@ class UserInvoiceController extends Controller
             
             foreach($iids as $i)
             {
-                $invoices[] = Invoice::find($i);
+                $invoices[] = InvoiceU::find($i);
             }
 
             $store->invoices = $invoices;
