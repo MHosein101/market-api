@@ -14,8 +14,6 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 
 /**
  * View model for store invoices group by users
- * 
- * @author Hosein Marzban
  */
 class StoreInvoice extends User
 {

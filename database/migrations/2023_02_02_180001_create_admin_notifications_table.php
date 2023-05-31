@@ -4,7 +4,7 @@ use Illuminate\Database\Migrations\Migration;
 use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Support\Facades\Schema;
 
-class CreateUserInvoicesTable extends Migration
+class CreateAdminNotificationsTable extends Migration
 {
     /**
      * Run the migrations.
@@ -13,9 +13,19 @@ class CreateUserInvoicesTable extends Migration
      */
     public function up()
     {
-        Schema::create('user_invoices', function (Blueprint $table) {
+        Schema::create('admin_notifications', function (Blueprint $table) {
             $table->id();
+
+            $table->string('message');
+            
+            $table->boolean('is_new')->default(true);
+
+            $table->integer('time');
+
+            $table->unsignedBigInteger('store_id');
+
             $table->timestamps();
+            $table->softDeletes();
         });
     }
 
@@ -26,6 +36,6 @@ class CreateUserInvoicesTable extends Migration
      */
     public function down()
     {
-        Schema::dropIfExists('user_invoices');
+        Schema::dropIfExists('admin_notifications');
     }
 }

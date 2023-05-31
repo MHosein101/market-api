@@ -18,17 +18,17 @@ class UserInvoiceController extends Controller
     /**
      * Return all user's invoices with filter
      * 
-     * @see SearchHelper::dataWithFilters(array, QueryBuilder, string|null, array, string|null) : Model[]
+     * @see SearchHelper::dataWithFilters()
      * 
-     * @param Request $request
+     * @param \Illuminate\Http\Request
      * 
-     * @return Response
+     * @return \Illuminate\Http\JsonResponse
      */ 
     public function getList(Request $request)
     {
         $storesInvoices = Invoice
-        ::selectRaw('id as invoice_id, store_id, user_id, state, COUNT(id) as invoices_count, created_at')
-        ->groupBy('user_id', 'store_id', 'id', 'state', 'created_at');
+        ::selectRaw('id as invoice_id, store_id, user_id, state, tracking_number, bill_number, COUNT(id) as invoices_count, created_at')
+        ->groupBy('user_id', 'store_id', 'id', 'state', 'created_at', 'tracking_number', 'bill_number');
 
         $invoiceItems = InvoiceItem
         ::selectRaw('invoice_id, base_product_id as product_id');
@@ -65,16 +65,16 @@ class UserInvoiceController extends Controller
             $join->on('i_products.product_id', 'p_categories.product_id');
         });
 
+        // get all store_id and invoice_id without pagination order by created_at desc
+
         $invoicesqbuilder = clone $qbuilder;
         $invoicesqbuilder = $invoicesqbuilder->selectRaw('s_invoices.store_id, s_invoices.invoice_id, s_invoices.created_at');
 
-        $invoicesFilters = $request->query();
-
-        unset($invoicesFilters['page']);
-        unset($invoicesFilters['limit']);
+        unset($request['page']);
+        unset($request['limit']);
 
         $invoicesList = SearchHelper::dataWithFilters(
-            $invoicesFilters , 
+            $request->query() , 
             clone $invoicesqbuilder , 
             null , 
             [
@@ -83,20 +83,22 @@ class UserInvoiceController extends Controller
                 'brand_id'     => null ,
                 'category_id'  => null ,
                 'name'         => null ,
+                'tracking_number' => null ,
+                'bill_number'     => null ,
             ] , 
             'filterUserInvoices' ,
             true
         );
 
+        // get all store_id
+
         $storesqbuilder = clone $qbuilder;
         $storesqbuilder = $storesqbuilder->selectRaw('s_invoices.store_id');
-        
-        $storesFilters = $request->query();
 
-        unset($storesFilters['order']);
+        unset($request['order']);
 
         $storesList = SearchHelper::dataWithFilters(
-            $storesFilters , 
+            $request->query() , 
             clone $storesqbuilder , 
             null , 
             [
@@ -105,6 +107,8 @@ class UserInvoiceController extends Controller
                 'brand_id'     => null ,
                 'category_id'  => null ,
                 'name'         => null ,
+                'tracking_number' => null ,
+                'bill_number'     => null ,
 
                 'order'        => null
             ] , 
@@ -118,7 +122,7 @@ class UserInvoiceController extends Controller
             $storesIds[] = $d->store_id;
         }
 
-        $storesIds = array_values( array_unique($storesIds) );
+        $storesIds = array_values( array_unique($storesIds) ); // only unique store_id
 
         $storesInvoicesIds = [];
         
@@ -128,7 +132,7 @@ class UserInvoiceController extends Controller
 
             foreach($invoicesList as $d)
             {
-                if( $sid == $d->store_id )
+                if( $sid == $d->store_id ) // group invoice_id by store_id
                 {
                     $storesInvoicesIds[$sid][] = $d->invoice_id;
                 }
@@ -146,7 +150,7 @@ class UserInvoiceController extends Controller
 
         foreach($storesInvoicesIds as $sid => $iids)
         {
-            if( in_array($sid, $storesIds) )
+            if( in_array($sid, $storesIds) ) // get the data from db
             {
                 $user = UserInvoice::find($sid);
 
@@ -181,10 +185,10 @@ class UserInvoiceController extends Controller
     /**
      * Change invoice's state
      * 
-     * @param Request $request
+     * @param \Illuminate\Http\Request
      * @param int $invoiceId
      * 
-     * @return Response
+     * @return \Illuminate\Http\JsonResponse
      */ 
     public function changeState(Request $request, $invoiceId)
     {
@@ -198,8 +202,7 @@ class UserInvoiceController extends Controller
 
             foreach($invoice->items as $item)
             {
-                StoreProduct::where('id', $item->store_product_id)
-                ->increment('warehouse_count', $item->count);
+                StoreProduct::where('id', $item->store_product_id)->increment('warehouse_count', $item->count);
             }
         }
 

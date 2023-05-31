@@ -2,12 +2,6 @@
 
 namespace App\Models;
 
-
-/**
- * Constant values invoices states
- * 
- * @author Hosein marzban
- */
 class InvoiceState 
 {
 

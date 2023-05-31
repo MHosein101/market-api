@@ -11,9 +11,7 @@ use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Facades\Validator;
 
 /**
- * Helper methods to get complex data or modify them
- * 
- * @author Hosein marzban
+ * Helper methods to get complex data or  make query builders
  */ 
 class DataHelper
 {
@@ -38,7 +36,7 @@ class DataHelper
     /**
      * Validate request data with rules and return error response if fails
      *
-     * @param Response $response
+     * @param \Illuminate\Http\Response $response
      * @param array $data
      * @param array $rulesAndNames
      * 
@@ -58,13 +56,15 @@ class DataHelper
         }
 
         $validator = Validator::make($data, $rules, [], $attrNames);
+        
 
         if( $validator->fails() ) 
         {
             return 
             [
                 'code'     => 400 ,
-                'response' => $response
+                'response' => 
+                    $response
                     ->json(
                     [ 
                         'status'  => 400 ,
@@ -78,7 +78,8 @@ class DataHelper
         {
             return 
             [ 
-                'code' => 200 
+                'code' => 200 ,
+                'data' => $validator->validated()
             ];
         }
 
@@ -88,7 +89,7 @@ class DataHelper
      * Return all categories with their chidren or filter them
      * 
      * @see SearchHelper::configQueryParams(array, array) : array
-     * @see SearchHelper::dataWithFilters(array, QueryBuilder, string|null, array, string|null) : Model[]
+     * @see SearchHelper::dataWithFilters()
      * @see DataHelper::categoriesTree(int, string) : Model[]
      * 
      * @param array $queryString
@@ -303,10 +304,10 @@ class DataHelper
     /**
      * Control the model image
      * 
-     * @param Request $request
+     * @param \Illuminate\Http\Request
      * @param boolean $isCreate
      * @param string $path
-     * @param Model $class
+     * @param \Illuminate\Database\Eloquent\Model|string $class
      * @param int $id
      * @param string $input
      * @param string $column
@@ -345,9 +346,10 @@ class DataHelper
     }
 
     /**
-     * Check value is unique in name column of brands and categories in create and update
+     * Check if $value is unique in [name] column of 
+     * brands and categories , used for create and update
      * 
-     * @param Model $class
+     * @param \Illuminate\Database\Eloquent\Model|string $class
      * @param string $value
      * @param int|null $id
      * 
@@ -368,7 +370,7 @@ class DataHelper
     /**
      * Log the request into files
      * 
-     * @param Request $request
+     * @param \Illuminate\Http\Request
      * 
      */ 
     public static function logRequest($request) 

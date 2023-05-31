@@ -19,18 +19,18 @@ class ProductSeeder extends Seeder
         $words = ['ماشین', 'گلابی', 'لباس', 'سیب', 'گوشی', 's2', 'e14', 'xxl', 'upq', 'درجه یک'];
         $start = 'محصول';
 
-        for($i = 0; $i < 11; $i++) {
-
+        for($i = 0; $i < 11; $i++) 
+        {
             $t = SeederHelper::string($words, [4, 5], $start);
             $s = SeederHelper::string($words, [4, 5], $start, '-');
             $bc = SeederHelper::number(12);
 
             Product::create([
-                'title' => $t ,
-                'slug' => $s , 
-                'barcode' => $bc , 
+                'title'       => $t ,
+                'slug'        => $s , 
+                'barcode'     => $bc , 
                 'description' => 'توضیحاتی برای این محصول با این عنوان که در تصمیم گیری برای خرید کاربر کمک میکند' , 
-                'brand_id' => 0
+                'brand_id'    => 0
             ]);
 
         }

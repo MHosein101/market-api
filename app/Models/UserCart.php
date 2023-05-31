@@ -5,13 +5,7 @@ namespace App\Models;
 use App\Http\Helpers\CartHelper;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\SoftDeletes;
-use Illuminate\Database\Eloquent\Factories\HasFactory;
 
-/**
- * Model to work user cart items
- * 
- * @author Hosein Marzban
- */
 class UserCart extends Model
 {
     /**
@@ -44,7 +38,7 @@ class UserCart extends Model
         'id', 
         'count', 
         'current_price', 
-        // 'current_discount', 
+        'current_discount', 
         'is_payment_cash', 
         'product_id', 
         'store_id', 
@@ -80,7 +74,7 @@ class UserCart extends Model
     /**
      * Return new query builder for current user
      * 
-     * @return QueryBuilder
+     * @return Model
      */
     public static function currentUser() 
     {
@@ -105,7 +99,7 @@ class UserCart extends Model
     /**
      * Return item's base product info
      * 
-     * @return Product
+     * @return array
      */
     public function getProductAttribute() 
     {
@@ -215,7 +209,7 @@ class UserCart extends Model
     /**
      * Calculate and Return item price and discounts
      * 
-     * @return Product
+     * @return array
      */
     public function getPriceAttribute() 
     {

@@ -15,8 +15,6 @@ use App\Models\UserMarkedProductAnalytic;
 
 /**
  * Helper methods for searching data
- * 
- * @author Hosein marzban
  */ 
 class SearchHelper
 {
@@ -51,13 +49,13 @@ class SearchHelper
      * @see SearchHelper::configQueryParams(array, array) : array
      *
      * @param array $queryString
-     * @param Model|QueryBuilder $class
+     * @param \Illuminate\Database\Eloquent\Model|string $class
      * @param string|null $select
      * @param array $filterParams
      * @param string|null $filterFunction
      * @param boolean $skipPagination
      * 
-     * @return Model[]
+     * @return \Illuminate\Database\Eloquent\Model[]
      */ 
     public static function dataWithFilters($queryString, $class, $select = '*', $filterParams = [], $filterFunction = null, $skipPagination = false) 
     {
@@ -126,12 +124,14 @@ class SearchHelper
         return 
         [
             'data'  => $data ,
-            'count' => [
+            'count' => 
+            [
                 'current' => count($data) ,
                 'total'   => $count ,
                 'limit'   => (int)$query['limit']
             ] ,
-            'pagination' => [
+            'pagination' => 
+            [
                 'current' => (int)$query['page'] ,
                 'last'    => $lastPage
             ]
@@ -139,15 +139,15 @@ class SearchHelper
     }
     
     /**
-     * Return items that user marked as favorite or in it's history
+     * Return items that user marked as favorite, analytics, or history list
      * 
-     * @see SearchHelper::dataWithFilters(array, QueryBuilder, string|null, array, string|null) : Model[]
-     *
+     * @see SearchHelper::dataWithFilters()
+     * 
      * @param int $userId
-     * @param Modle $class
+     * @param \Illuminate\Database\Eloquent\Model|string $class
      * @param array $query
      * 
-     * @return Model[]
+     * @return \Illuminate\Database\Eloquent\Model[]
      */ 
     public static function getUserMarkedItems($userId, $class, $query) 
     {

@@ -4,47 +4,54 @@ namespace App\Http\Controllers;
 
 use App\Models\Brand;
 use Illuminate\Http\Request;
-use App\Models\CategoryBrand;
 use App\Http\Helpers\DataHelper;
 use App\Http\Helpers\SearchHelper;
 
-/**
- * Admin panel brands management
- * 
- * @author Hosein marzban
- */ 
 class AdminBrandController extends Controller
 {
     
     /**
-     * Return all brands with filter OR all of them with out filter (as list)
+     * Return brands with with filters and pagination
+     * if [list] query parameter is set, Return all brands without paginaition
      * 
-     * @see SearchHelper::dataWithFilters(array, QueryBuilder, string|null, array, string|null) : Model[]
+     * @see SearchHelper::dataWithFilters()
      * 
-     * @param Request $request
+     * @param \Illuminate\Http\Request
      * 
-     * @return Response
+     * @return \Illuminate\Http\JsonResponse
      */ 
     public function getList(Request $request)
     {
         $result = null;
 
-        if($request->query('list') != null) {
+        if( $request->query('list') != null ) 
+        {
             $brands = Brand::get();
             
-            $result = [
-                'data' => $brands ,
-                'count' => [ 'current' => count($brands) , 'total' => count($brands) , 'limit' => -1 ] ,
-                'pagination' => [ 'current' => 1 , 'last' => 1 ]
+            $result = 
+            [
+                'data'  => $brands ,
+                'count' => 
+                [ 
+                    'current' => count($brands) ,
+                    'total'   => count($brands) ,
+                    'limit'   => -1 
+                ] ,
+                'pagination' => 
+                [ 
+                    'current' => 1 , 
+                    'last'    => 1 
+                ]
             ];
         }
-        else {
+        else 
+        {
             $result = SearchHelper::dataWithFilters(
                 $request->query() , 
                 Brand::class , 
                 '*' , 
                 [ 
-                    'name' => null , 
+                    'name'    => null , 
                     'company' => null 
                 ] , 
                 'filterBrands'
@@ -53,32 +60,36 @@ class AdminBrandController extends Controller
         
         extract($result);
 
-        $status = ( count($data) > 0 ) ? 200 : 204;
-        return response()
-        ->json([ 
-            'status' => $status ,
-            'message' => ($status == 200) ? 'OK' : 'No brand found.' ,
-            'count' => $count ,
-            'pagination' => $pagination ,
-            'brands' => $data
-        ], 200);
+        $status = count($data) > 0 ? 200 : 204;
+
+        return 
+            response()
+            ->json(
+            [ 
+                'status'     => $status ,
+                'message'    => $status == 200 ? 'OK' : 'No brand found.' ,
+                'count'      => $count ,
+                'pagination' => $pagination ,
+                'brands'     => $data
+            ], 200);
     }
 
     /**
-     * Create new brand or Update existing brand by id
+     * Create new brand or Update a brand by id
      * 
-     * @see DataHelper::validate(Response, array) : array
-     * @see SearchHelper::dataWithFilters(array, QueryBuilder, string|null, array, string|null) : Model[]
-     * @see DataHelper::dataImage(Request, boolean, string, Model, int, string, string) : void
+     * @see DataHelper::validate()
+     * @see SearchHelper::dataWithFilters()
+     * @see DataHelper::dataImage()
+     * @see DataHelper::checkUnique()
      * 
-     * @param Request $request
+     * @param \Illuminate\Http\Request
      * @param int|null $brandId
      * 
-     * @return Response
+     * @return \Illuminate\Http\JsonResponse
      */ 
     public function createOrUpdateBrand(Request $request, $brandId = null)
     {
-        $isCreate = ($brandId == null) ? true : false;
+        $isCreate = $brandId == null;
 
         $v = DataHelper::validate( response() , $request->post() , 
         [
@@ -86,33 +97,47 @@ class AdminBrandController extends Controller
             'brand_english_name' => [ 'نام انگلیسی برند', 'required|filled|max:50' ] ,
             'brand_company'      => [ 'شرکت برند', 'required|filled|max:50' ] ,
         ]);
-        if( $v['code'] == 400 ) return $v['response'];
+
+        if( $v['code'] == 400 )
+        {
+            return $v['response'];
+        }
 
         $v = DataHelper::validate( response() , $request->file() , 
         [
             'brand_logo' => [ 'فایل لوگو', 'file|image|between:4,1024' ] ,
         ]);
-        if( $v['code'] == 400 ) return $v['response'];
 
-        $data = [
-            'name' => $request->post('brand_name') ,
-            'english_name' => $request->post('brand_english_name') ,
-            'slug' => preg_replace('/ +/', '-', $request->post('brand_name')) ,
+        if( $v['code'] == 400 )
+        {
+            return $v['response'];
+        }
+
+        $data = 
+        [
+            'name'    => $request->post('brand_name') ,
+            'slug'    => preg_replace('/ +/', '-', $request->post('brand_name')) ,
             'company' => $request->post('brand_company') ,
+            'english_name' => $request->post('brand_english_name') ,
         ];
 
         $isUnique = DataHelper::checkUnique(Brand::class, $data['name'], $brandId);
+
         $msg = 'نام برند نمیتواند تکراری باشد';
+
         $status = 401;
 
-        if($isUnique) {
-            if($isCreate) {
+        if($isUnique) 
+        {
+            if($isCreate) 
+            {
                 $data['logo_url'] = '';
                 $brand = Brand::create($data);
 
                 $brandId = $brand->id;
             }
-            else {
+            else 
+            {
                 Brand::withTrashed()
                 ->where('id', $brandId)
                 ->update($data);
@@ -121,7 +146,7 @@ class AdminBrandController extends Controller
             DataHelper::dataImage($request, $isCreate, 'brands', Brand::class, $brandId, 'brand_logo', 'logo_url');
 
             $msg = $isCreate ? 'برند با موفقیت ثبت شد' : 'تغییرات با موفقیت ثبت شد';
-            // $status = $isCreate ? 201 : 200;
+
             $status = 200;
         }
 
@@ -130,67 +155,50 @@ class AdminBrandController extends Controller
             Brand::class , 
             '*' , 
             [ 
-                'name' => null , 
+                'name'    => null , 
                 'company' => null 
             ] , 
             'filterBrands'
         );
+
         extract($result);
 
-        return response()
-        ->json([
-            'status' => $status ,
-            'message' => $msg ,
-            'count' => $count ,
-            'pagination' => $pagination ,
-            'brands' => $data ,
-        ], 200);
+        return 
+            response()
+            ->json(
+            [
+                'status'     => $status ,
+                'message'    => $msg ,
+                'count'      => $count ,
+                'pagination' => $pagination ,
+                'brands'     => $data ,
+            ], 200);
     }
 
     /**
      * Soft delete or Restore brand
      * 
-     * @see SearchHelper::dataWithFilters(array, QueryBuilder, string|null, array, string|null) : Model[]
+     * @see SearchHelper::dataWithFilters()
      * 
-     * @param Request $request
+     * @param \Illuminate\Http\Request
      * @param int $brandId
      * 
-     * @return Response
+     * @return \Illuminate\Http\JsonResponse
      */ 
     public function changeBrandState(Request $request, $brandId)
     {
-        $check = Brand::withTrashed()->find($brandId);
-        $msg = '';
+        $brand = Brand::withTrashed()->find($brandId);
 
-        if($check->deleted_at == null) {
-            Brand::where('id', $brandId)->delete();
-            $msg = 'Brand soft deleted.';
+        if( $brand->deleted_at == null ) 
+        {
+            $brand->delete();
         }
-        else {
-            Brand::withTrashed()->where('id', $brandId)->restore();
-            $msg = 'Brand restores.';
+        else 
+        {
+            $brand->restore();
         }
 
-        $result = SearchHelper::dataWithFilters(
-            $request->query() , 
-            Brand::class , 
-            '*' , 
-            [ 
-                'name' => null , 
-                'company' => null 
-            ] , 
-            'filterBrands'
-        );
-        extract($result);
-
-        return response()
-        ->json([ 
-            'status' => 200 ,
-            'message' => $msg ,
-            'count' => $count ,
-            'pagination' => $pagination ,
-            'brands' => $data
-        ], 200);
+        return $this->getList($request);
     }
 
 }

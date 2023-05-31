@@ -20,27 +20,31 @@ class AdminStoreController extends Controller
 {
     
     /**
-     * Return all stores with filter OR one store by id
+     * Return all stores with filters
+     * if [id] query parameter is set, return a store by id
      * 
-     * @see SearchHelper::dataWithFilters(array, QueryBuilder, string|null, array, string|null) : Model[]
+     * @see SearchHelper::dataWithFilters()
      * 
-     * @param Request $request
+     * @param \Illuminate\Http\Request
      * 
-     * @return Response
+     * @return \Illuminate\Http\JsonResponse
      */ 
     public function getList(Request $request)
     {
-        if( $request->query('id') != null ) {
-            
+        if( $request->query('id') != null ) 
+        {
             $store = Store::withTrashed()->find( $request->query('id') );
+
             $status = ( $store != null ) ? 200 : 404;
 
-            return response()
-            ->json([ 
-                'status' => $status ,
-                'message' => ($status == 200) ? 'OK' : 'No store found.' ,
-                'store' => $store
-            ], $status);
+            return 
+                response()
+                ->json(
+                [ 
+                    'status'  => $status ,
+                    'message' => $status == 200 ? 'OK' : 'No store found.' ,
+                    'store'   => $store
+                ], $status);
         }
 
         $result = SearchHelper::dataWithFilters(
@@ -48,49 +52,56 @@ class AdminStoreController extends Controller
             Store::class , 
             '*' ,
             [ 
-                'name' => null ,
-                'economic_code' => null ,
-                'number' => null ,
-                'national_code' => null ,
+                'name'     => null ,
+                'number'   => null ,
                 'province' => null ,
-                'city' => null ,
+                'city'     => null ,
+                'national_code' => null ,
+                'economic_code' => null ,
             ] , 
             'filterStores'
         );
 
         extract($result);
 
-        $status = ( count($data) > 0 ) ? 200 : 204;
-        return response()
-        ->json([ 
-            'status' => $status ,
-            'message' => ($status == 200) ? 'OK' : 'No store found.' ,
-            'count' => $count ,
-            'pagination' => $pagination ,
-            'stores' => $data
-        ], 200);
+        $status = count($data) > 0 ? 200 : 204;
+
+        return 
+            response()
+            ->json(
+            [ 
+                'status'     => $status ,
+                'message'    => $status == 200 ? 'OK' : 'No store found.' ,
+                'count'      => $count ,
+                'pagination' => $pagination ,
+                'stores'     => $data
+            ], 200);
     }
 
     /**
      * Create new store and store User or Update existing store by id
-     * if $signuUp equals true, then return results as array, NOT response
      * 
-     * @see DataHelper::validate(Response, array) : array
-     * @see DataHelper::dataImage(Request, boolean, string, Model, int, string, string) : void
+     * it also will be called from AuthController::signup()
+     * if $signuUp is true, then return array, else return JsonResponse
      * 
-     * @param Request $request
+     * @see DataHelper::validate()
+     * @see DataHelper::dataImage()
+     * 
+     * @param \Illuminate\Http\Request
      * @param int|null $storeId
      * @param boolean $signUp
      * 
-     * @return Response
+     * @return \Illuminate\Http\JsonResponse|array
      */ 
     public function createOrUpdateStore(Request $request, $storeId = null, $signUp = false)
     {
-        $isCreate = ($storeId == null) ? true : false;
+        $isCreate = $storeId == null;
 
         $uniqueIgnoreStore = $isCreate ? '' : ",$storeId,id";
 
+        // it will be used in update
         $userId = $isCreate ? -1 : User::where('store_id', $storeId)->get()->first()->id;
+
         $uniqueIgnoreUser = $isCreate ? '' : ",$userId,id";
 
         $v = DataHelper::validate( response() , $request->post() , 
@@ -120,14 +131,20 @@ class AdminStoreController extends Controller
             'bank_sheba_number' => [ 'شماره شبای حساب', 'nullable|numeric|digits:24' ] ,
             
         ]);
-        if( $v['code'] == 400 ) {
+        if( $v['code'] == 400 ) 
+        {
             if($signUp)
-                return [
-                    'ok' => false ,
+            {
+                return 
+                [
+                    'ok'     => false ,
                     'errors' => $v['response']
                 ];
+            }
             else 
+            {
                 return $v['response'];
+            }
         }
 
         $v = DataHelper::validate( response() , $request->file() , 
@@ -136,17 +153,25 @@ class AdminStoreController extends Controller
             'banner_image'  => [ 'عکس سر در (بنر)', 'file|image|between:4,2048' ] ,
             'license_image' => [ 'عکس مجوز', 'file|image|between:4,2048' ] ,
         ]);
-        if( $v['code'] == 400 ) {
+
+        if( $v['code'] == 400 ) 
+        {
             if($signUp)
-                return [
-                    'ok' => false ,
+            {
+                return 
+                [
+                    'ok'     => false ,
                     'errors' => $v['response']
                 ];
+            }
             else 
+            {
                 return $v['response'];
+            }
         }
 
-        $data = [
+        $data = 
+        [
             'name'          => $request->post('name') ,
             'slug'          => preg_replace('/ +/', '-', $request->post('name')) ,
             'economic_code' => DataHelper::post('economic_code', '') ,
@@ -170,20 +195,25 @@ class AdminStoreController extends Controller
             'bank_sheba_number' => DataHelper::post('bank_sheba_number', '') ,
         ];
 
-        $userData = [
+        $userData = 
+        [
             'full_name' => $request->post('owner_full_name') ,
             'national_code' => $request->post('owner_national_code') ,
             'phone_number_primary' => $request->post('owner_phone_number')
         ];
         
-        if($request->post('owner_password') != null)
+        if($request->post('owner_password') != null) 
+        {
             $userData['password'] = Hash::make($request->post('owner_password'));
+        }
 
         $store = null;
         $user = null;
 
-        if($isCreate) {
+        if($isCreate) 
+        {
             $data['admin_confirmed'] = $signUp ? -1 : time();
+
             $store = Store::create($data);
             $storeId = $store->id;
 
@@ -193,7 +223,8 @@ class AdminStoreController extends Controller
             
             $user = User::create($userData);
         }
-        else {
+        else 
+        {
             User::withTrashed()->where('store_id', $storeId)->update($userData);
 
             Store::withTrashed()->where('id', $storeId)->update($data);
@@ -201,91 +232,97 @@ class AdminStoreController extends Controller
             $store = Store::withTrashed()->find($storeId);
         }
 
-        $filesKeys = ['logo_image', 'banner_image', 'license_image'];
-        foreach($filesKeys as $column)
+        // process images
+        foreach(['logo_image', 'banner_image', 'license_image'] as $column)
+        {
             DataHelper::dataImage($request, $isCreate, 'stores', Store::class, $storeId, $column, $column);
+        }
 
 
-        if($signUp) {
-            return [
-                'ok' => true ,
+        if($signUp) 
+        {
+            return 
+            [
+                'ok'   => true ,
                 'user' => $user
             ];
         }
-        else {
+        else 
+        {
             $status = $isCreate ? 201 : 200;
-            return response()
-            ->json([ 
-                'status' => $status ,
-                'message' =>  $isCreate ? 'Store created.' : 'Store updated.' ,
-                'store' => $store
-            ], $status);
+
+            return 
+                response()
+                ->json(
+                [ 
+                    'status'   => $status ,
+                    'message' =>  $isCreate ? 'Store created.' : 'Store updated.' ,
+                    'store'   => $store
+                ], $status);
         }
     }
 
     /**
      * Soft delete or Restore store
      * 
-     * @param Request $request
+     * @param \Illuminate\Http\Request
      * @param int $storeId
      * 
-     * @return Response
+     * @return \Illuminate\Http\JsonResponse
      */ 
     public function changeStoreState(Request $request, $storeId)
     {
-        $check = Store::withTrashed()->find($storeId);
-        $msg = '';
-
-        if($check->deleted_at == null) {
-            Store::where('id', $storeId)->delete();
-            User::where('store_id', $storeId)->delete();
-            $msg = 'Store soft deleted.';
-        }
-        else {
-            Store::withTrashed()->where('id', $storeId)->restore();
-            User::withTrashed()->where('store_id', $storeId)->restore();
-            $msg = 'Store restored.';
-        }
-
         $store = Store::withTrashed()->find($storeId);
 
-        return response()
-        ->json([ 
-            'status' => 200 ,
-            'message' => $msg ,
-            'store' => $store
-        ], 200);
+        if($store->deleted_at == null) 
+        {
+            $store->delete();
+
+            User::where('store_id', $storeId)->delete();
+        }
+        else 
+        {
+            $store->restore();
+
+            User::withTrashed()->where('store_id', $storeId)->restore();
+        }
+
+        return 
+            response()
+            ->json(
+            [ 
+                'status'  => 200 ,
+                'message' => 'OK' ,
+                'store'   => $store
+            ], 200);
     }
 
     /**
      * Confirm store by admin
      * 
-     * @param Request $request
+     * @param \Illuminate\Http\Request
      * @param int $storeId
      * 
-     * @return Response
+     * @return \Illuminate\Http\JsonResponse
      */ 
     public function confirmStore(Request $request, $storeId)
     {
-        $check = Store::withTrashed()->find($storeId);
-        $msg = '';
-
-        if($check->is_pending) {
-            Store::where('id', $storeId)->update([ 'admin_confirmed' => time() ]);
-            $msg = 'Store confirmed.';
-        }
-        else {
-            $msg = 'Store already confirmed.';
-        }
-
         $store = Store::withTrashed()->find($storeId);
 
-        return response()
-        ->json([ 
-            'status' => 200 ,
-            'message' => $msg ,
-            'store' => $store
-        ], 200);
+        if($store->is_pending) 
+        {
+            $store->admin_confirmed = time();
+            $store->save();
+        }
+
+        return 
+            response()
+            ->json(
+            [ 
+                'status'  => 200 ,
+                'message' => 'OK' ,
+                'store'   => $store
+            ], 200);
     }
 
 }

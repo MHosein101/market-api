@@ -8,8 +8,6 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 
 /**
  * Multi level menu categories model
- * 
- * @author Hosein Marzban
  */
 class MenuCategory extends Category
 {

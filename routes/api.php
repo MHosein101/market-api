@@ -2,9 +2,12 @@
 
 use App\Http\Controllers\AdminBrandController;
 use App\Http\Controllers\AdminCategoryController;
+use App\Http\Controllers\AdminImageSliderController;
+use App\Http\Controllers\AdminNotificationController;
 use App\Http\Controllers\AdminProductController;
 use App\Http\Controllers\AdminStoreController;
 use App\Http\Controllers\AdminUserController;
+use App\Http\Controllers\PublicHomePageController;
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\AuthController;
 use App\Http\Controllers\PublicProductController;
@@ -35,12 +38,19 @@ use App\Http\Controllers\UserInvoiceController;
 Route::group(
     [ 
         'middleware' => ['is-user', 'valid-query'] , 
-        'prefix' => 'public' 
+        'prefix'     => 'public' 
     ], function () 
 {
+    Route::controller(PublicHomePageController::class)->group(function() 
+    {
+        Route::get('home', 'initialData');
+
+        Route::get('searchbar', 'initialData');
+    });
     Route::controller(PublicSearchController::class)->group(function() 
     {
         Route::get('search', 'search');
+        Route::get('search/suggest', 'suggestQuery');
 
         Route::get('categories', 'categories');
         Route::get('categories/{categorySlug}/path', 'categoryBreadCrump');
@@ -88,6 +98,8 @@ Route::group(
         Route::get   ('info', 'info');
         Route::post  ('password', 'changePassword');
         Route::delete('logout', 'logout');
+
+        Route::delete('search', 'clearSearches');
     });
     Route::controller(UserActivityController::class)->group(function() 
     {
@@ -122,11 +134,26 @@ Route::group(
 Route::group(
     [ 
         'middleware' => ['user', 'admin', 'valid-query'] , 
-        'prefix' => 'admin' 
+        'prefix'     => 'admin' 
     ], function () 
 {
     Route::get('counter', [UserController::class,'adminDataCount']);
     
+    Route::controller(AdminImageSliderController::class)->group(function() 
+    {
+        Route::get ('slider', 'getList');
+
+        Route::post('slider', 'createOrUpdateSlide');
+        Route::post('slider/{slideId}/update', 'createOrUpdateSlide');
+
+        Route::put ('slider/{slideId}/state', 'changeSlideState');
+    });
+    Route::controller(AdminNotificationController::class)->group(function() 
+    {
+        Route::get('notifications', 'getList');
+        
+        Route::put('notifications', 'deleteNotifications');
+    });
     Route::controller(AdminCategoryController::class)->group(function() 
     {
         Route::get ('categories', 'getList');
@@ -190,6 +217,8 @@ Route::group(
 
     Route::group([ 'prefix' => 'store' ], function () 
     {
+        Route::post('setting', [StoreController::class,'changeSetting']);
+
         Route::get('counter', [UserController::class,'storeDataCount']);
 
         Route::controller(StoreProductController::class)->group(function() 

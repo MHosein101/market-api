@@ -12,11 +12,6 @@ use Illuminate\Database\Eloquent\Casts\Attribute;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 
-/**
- * Model to work with users table
- * 
- * @author Hosein Marzban
- */
 class User extends Authenticatable
 {
     
@@ -53,7 +48,10 @@ class User extends Authenticatable
      */
     protected $appends = 
     [ 
+        'store_name',
         'address', 
+        'notifications_count',
+        'min_shopping_count',
         'is_password', 
         'is_profile_image', 
         'is_active', 
@@ -137,7 +135,52 @@ class User extends Authenticatable
             'post_code' => '' ,
         ];
     }
+
+    /**
+     * Return store user, store name
+     * 
+     * @return string
+     */
+    public function getStoreNameAttribute() 
+    {
+        if( $this->account_type == UserAccountType::Store )
+        {
+            return Store::withTrashed()->find($this->store_id)->name;
+        }
+
+        return '';
+    }
     
+    /**
+     * Return admin notifications count
+     * 
+     * @return int
+     */
+    public function getNotificationsCountAttribute() 
+    {
+        if( $this->account_type == UserAccountType::Admin )
+        {
+            return AdminNotification::where('is_new', true)->count();
+        }
+
+        return -1;
+    }
+
+    /**
+     * Return store minimum shopping count option
+     * 
+     * @return int
+     */
+    public function getMinShoppingCountAttribute() 
+    {
+        if( $this->account_type == UserAccountType::Store )
+        {
+            return Store::withTrashed()->find($this->store_id)->minimum_shopping_count;
+        }
+
+        return -1;
+    }
+
     /**
      * Generate a random verification code and save it for user
      * 

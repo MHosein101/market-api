@@ -20,10 +20,10 @@ class FilterHelper
     /**
      * Add users filters to query builder
      *
-     * @param QueryBuilder $qbuilder
+     * @param object $qbuilder
      * @param array $query
      * 
-     * @return QueryBuilder
+     * @return object
      */ 
     public static function filterUsers($qbuilder, $query) 
     {
@@ -55,10 +55,10 @@ class FilterHelper
     /**
      * Add categories filters to query builder
      *
-     * @param QueryBuilder $qbuilder
+     * @param object $qbuilder
      * @param array $query
      * 
-     * @return QueryBuilder
+     * @return object
      */ 
     public static function filterCategories($qbuilder, $query) 
     {
@@ -73,10 +73,10 @@ class FilterHelper
     /**
      * Add brands filters to query builder
      *
-     * @param QueryBuilder $qbuilder
+     * @param object $qbuilder
      * @param array $query
      * 
-     * @return QueryBuilder
+     * @return object
      */ 
     public static function filterBrands($qbuilder, $query) 
     {
@@ -102,10 +102,10 @@ class FilterHelper
     /**
      * Add products filters to query builder
      *
-     * @param QueryBuilder $qbuilder
+     * @param object $qbuilder
      * @param array $query
      * 
-     * @return QueryBuilder
+     * @return object
      */ 
     public static function filterProducts($qbuilder, $query) 
     {
@@ -141,12 +141,40 @@ class FilterHelper
     }
 
     /**
-     * Add stores filters to query builder
+     * Add slides filters to query builder
      *
-     * @param QueryBuilder $qbuilder
+     * @param object $qbuilder
      * @param array $query
      * 
-     * @return QueryBuilder
+     * @return object
+     */ 
+    public static function filterSlides($qbuilder, $query) 
+    {
+        if( $query['title'] != null ) 
+        {
+            $qbuilder = $qbuilder->where('title','LIKE', "%{$query['title']}%");
+        }
+
+        if( $query['state'] != null ) 
+        {
+            $qbuilder = $qbuilder->where('state', (boolean)$query['state']);
+        }
+
+        if( $query['priority'] != null ) 
+        {
+            $qbuilder = $qbuilder->orderBy('priority', $query['priority']);
+        }
+
+        return $qbuilder;
+    }
+
+    /**
+     * Add stores filters to query builder
+     *
+     * @param object $qbuilder
+     * @param array $query
+     * 
+     * @return object
      */ 
     public static function filterStores($qbuilder, $query) 
     {
@@ -196,17 +224,16 @@ class FilterHelper
     /**
      * Add front search filters to products query builder
      *
-     * @see SearchHelper::filterProducts(QueryBuilder, array) : QueryBuilder
+     * @see SearchHelper::filterProducts()
      * 
-     * @param QueryBuilder $qbuilder
+     * @param object $qbuilder
      * @param array $query
      * 
-     * @return QueryBuilder
+     * @return object
      */ 
     public static function filterSearchProducts($qbuilder, $query) 
     {
-        $query['title'] = $query['q'];
-
+        $query['title'] = null;
         $query['barcode'] = null;
         
         $renameing = 
@@ -226,7 +253,7 @@ class FilterHelper
 
         $dataChecks = 
         [
-            'brand' => \App\Models\Brand::class ,
+            'brand'    => \App\Models\Brand::class ,
             'category' => \App\Models\Category::class ,
         ];
 
@@ -243,6 +270,31 @@ class FilterHelper
         }
 
         $qbuilder = FilterHelper::filterProducts(clone $qbuilder, $query);
+
+        if($query['q'] != null)
+        {
+            $words = explode(' ', $query['q']);
+            
+            $qbuilder = $qbuilder
+            ->where( function($query) use ($words)
+            {
+                $query
+                ->where( function($query) use ($words)
+                {
+                    foreach($words as $w)
+                    {
+                        $query->where('title', 'like', "%$w%");
+                    }
+                })
+                ->orWhere( function($query) use ($words)
+                {
+                    foreach($words as $w)
+                    {
+                        $query->where('tags', 'like', "%$w%");
+                    }
+                });
+            });
+        }
 
         switch($query['sort']) 
         {
@@ -283,10 +335,10 @@ class FilterHelper
     /**
      * Add invoices filters to query builder
      *
-     * @param QueryBuilder $qbuilder
+     * @param object $qbuilder
      * @param array $query
      * 
-     * @return QueryBuilder
+     * @return object
      */ 
     public static function filterStoreInvoices($qbuilder, $query) 
     {
@@ -307,9 +359,12 @@ class FilterHelper
             }
         }
         
-        if( $query['title'] != null ) 
+        foreach(['title', 'tracking_number', 'bill_number'] as $field) 
         {
-            $qbuilder = $qbuilder->where('title','LIKE', "%{$query['title']}%");
+            if( $query[$field] != null ) 
+            {
+                $qbuilder = $qbuilder->where($field,'LIKE', "%{$query[$field]}%");
+            }
         }
         
         if( $query['name'] != null ) 
@@ -344,10 +399,10 @@ class FilterHelper
     /**
      * Add invoices filters to query builder
      *
-     * @param QueryBuilder $qbuilder
+     * @param object $qbuilder
      * @param array $query
      * 
-     * @return QueryBuilder
+     * @return object
      */ 
     public static function filterUserInvoices($qbuilder, $query) 
     {
@@ -368,7 +423,7 @@ class FilterHelper
             }
         }
         
-        foreach(['name', 'title'] as $field) 
+        foreach(['name', 'title', 'tracking_number', 'bill_number'] as $field) 
         {
             if( $query[$field] != null ) 
             {
@@ -382,6 +437,25 @@ class FilterHelper
             {
                 $qbuilder = $qbuilder->where($field, $query[$field]);
             }
+        }
+
+        return $qbuilder;
+    }
+
+    /**
+     * Add admin notification filters to query builder
+     *
+     * @param object $qbuilder
+     * @param array $query
+     * 
+     * @return object
+     */ 
+    public static function filterAdminNotifications($qbuilder, $query) 
+    {
+        
+        if( $query['store'] != null ) 
+        {
+            $qbuilder = $qbuilder->where('store','LIKE', "%{$query['store']}%");
         }
 
         return $qbuilder;

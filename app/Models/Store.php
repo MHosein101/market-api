@@ -6,11 +6,6 @@ use Illuminate\Support\Str;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\SoftDeletes;
 
-/**
- * Model to work with stores table
- * 
- * @author Hosein Marzban
- */
 class Store extends Model
 {
     /**

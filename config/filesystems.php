@@ -71,6 +71,7 @@ return [
         public_path('stores') => storage_path('app/public/stores'),
         public_path('users') => storage_path('app/public/users'),
         public_path('brands') => storage_path('app/public/brands'),
+        public_path('sliders') => storage_path('app/public/sliders'),
     ],
 
 ];

@@ -5,7 +5,7 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\SoftDeletes;
 
-class UserHistory extends Model
+class ProductTag extends Model
 {
     /**
      * Adds a deleted_at column to model's table
@@ -19,4 +19,14 @@ class UserHistory extends Model
      * @var array
      */
     protected $guarded = [];
+
+    /**
+     * The attributes that should be hidden for serialization.
+     *
+     * @var array
+     */
+    protected $hidden = 
+    [ 
+        'created_at', 'updated_at', 'deleted_at' 
+    ];
 }

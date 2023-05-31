@@ -8,8 +8,6 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 
 /**
  * Public view of products table data
- * 
- * @author Hosein Marzban
  */
 class PublicProduct extends SearchProduct
 {

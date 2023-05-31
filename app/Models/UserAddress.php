@@ -5,11 +5,6 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\SoftDeletes;
 
-/**
- * Model to work with user_addresses table
- * 
- * @author Hosein Marzban
- */
 class UserAddress extends Model
 {
     /**

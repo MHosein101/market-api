@@ -18,11 +18,13 @@ class StoreSeeder extends Seeder
         $rp = random_int(7, 15);
 
         $wordsName = ['ماهان', 'سپهر', 'کوروش', 'دایجی کاولا', 'بیوتی رول', 'تکنو', ' لایف', 'دایلی', 'مات'];
+        
         $startName = 'فروشگاه';
 
         $wordsProvince = ['مازندران', 'تهران', 'اراک', 'گیلان', 'تبریز', 'سمنان', 'خراسان', 'اصفهان', 'شیراز', 'کرمان'];
 
-        // for($i = 0; $i < $rp; $i++) {
+        for($i = 0; $i < $rp; $i++) 
+        {
 
             $n = SeederHelper::string($wordsName, [2, null], $startName);
             $s = SeederHelper::string($wordsName, [2, null], $startName, '-');
@@ -31,7 +33,8 @@ class StoreSeeder extends Seeder
 
             $p = SeederHelper::one($wordsProvince);
 
-            Store::create([
+            Store::create(
+            [
                 'name' => $n ,
                 'slug' => $s ,
                 'economic_code' => $ec ,
@@ -40,7 +43,7 @@ class StoreSeeder extends Seeder
                 'owner_phone_number' => $opn ,
         
                 'province' => $p ,
-                'city' => $p ,
+                'city'     => $p ,
 
                 'office_address' => '' ,
                 'office_number'  => '' ,
@@ -50,6 +53,6 @@ class StoreSeeder extends Seeder
                 'admin_confirmed' => time() ,
             ]);
 
-        // }
+        }
     }
 }

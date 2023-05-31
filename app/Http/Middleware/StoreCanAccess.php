@@ -18,8 +18,8 @@ class StoreCanAccess
      * Handle an incoming request.
      *
      * @param  \Illuminate\Http\Request  $request
-     * @param  \Closure(\Illuminate\Http\Request): (\Illuminate\Http\Response|\Illuminate\Http\RedirectResponse)  $next
-     * @return \Illuminate\Http\Response|\Illuminate\Http\RedirectResponse
+     * @param \Closure|\Illuminate\Http\Request $next
+     * @return \Illuminate\Http\JsonResponse|\Illuminate\Http\Request|\Closure
      */
     public function handle(Request $request, Closure $next)
     {
@@ -27,7 +27,8 @@ class StoreCanAccess
         {
             return 
                 response()
-                ->json([ 
+                ->json(
+                [ 
                     'status'  => 403 ,
                     'message' => 'You are not a store manager.' 
                 ], 403);

@@ -1,16 +1,8 @@
 # Marketing website API Using Laravel
 
-[Preview](https://torob.vercel.app/)
+[Visit](https://torob.iran.liara.run/) and explore <br/>
+(Sometimes it may be off) <br/>
 
-The parts that were completed :
+Front-End was implemented by [Ali-HSNZ](https://github.com/Ali-HSNZ) <br/>
 
-* Admin panel
-    * Products management
-    * Brands management
-    * Categories management
-    * Users management
-    * Stores management
-* Store panel
-    * Store Products management
-* User panel
-    * User cart
+More details on implemented sections [Here](https://drive.google.com/file/d/1GGu3dnIpTwianZ_Rxb87OV0hAKuyVtx3/view?usp=sharing)

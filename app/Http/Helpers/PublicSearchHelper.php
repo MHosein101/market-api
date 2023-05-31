@@ -5,13 +5,13 @@ namespace App\Http\Helpers;
 use App\Models\Brand;
 use App\Models\Store;
 use App\Models\Category;
+use App\Models\ProductTag;
 use App\Models\ProductCategory;
+use App\Models\UserSearchQuery;
 use App\Models\PublicStoreProduct;
 
 /**
  * Helper methods for public search data
- * 
- * @author Hosein marzban
  */ 
 class PublicSearchHelper
 {
@@ -20,7 +20,7 @@ class PublicSearchHelper
      *
      * @param Category $category
      * 
-     * @return Category
+     * @return array
      */ 
     public static function categoryUntilTopParent($category)
     {
@@ -179,7 +179,10 @@ class PublicSearchHelper
         {
             return 'دسته های دقیق تر';
         }
-        else { return 'دسته های مشابه'; }
+        else 
+        { 
+            return 'دسته های مشابه'; 
+        }
 
     }
 
@@ -187,10 +190,10 @@ class PublicSearchHelper
      * Return related categories of user search
      *
      * @param string $queryCategoryName
-     * @param QueryBuilder $qbuilder
+     * @param object $qbuilder
      * @param string $q
      * 
-     * @return Category[]
+     * @return array
      */ 
     public static function relatedCategories($queryCategoryName, $qbuilder, $q)
     {
@@ -268,7 +271,7 @@ class PublicSearchHelper
     /**
      * Return related brands of user search
      *
-     * @param QueryBuilder $qbuilder
+     * @param object $qbuilder
      * @param string $q
      * 
      * @return Category[]
@@ -347,5 +350,42 @@ class PublicSearchHelper
 
     }
 
+    
+    /**
+     * Return search bar data
+     * 
+     * @param object|null $user
+     * 
+     * @return array
+     */ 
+    public static function searchBarData($user)
+    {
+        $history = []; // user search history
+        $popular = []; // popular searched queries
+
+        if($user)
+        {
+            $history = UserSearchQuery::where('user_id', $user->id)
+            ->orderBy('created_at', 'desc')
+            ->get()
+            ->pluck('text')
+            ->unique()
+            ->values()
+            ->take(15);
+        }
+
+        $popular = ProductTag::orderBy('rate', 'desc')
+        ->get()
+        ->pluck('name')
+        ->unique()
+        ->values()
+        ->take(5);
+
+        return 
+        [
+            'user'    => $history ,
+            'popular' => $popular
+        ];
+    }
 
 }

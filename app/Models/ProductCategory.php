@@ -5,11 +5,6 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\SoftDeletes;
 
-/**
- * Model to work with product_categories table
- * 
- * @author Hosein Marzban
- */
 class ProductCategory extends Model
 {
     /**

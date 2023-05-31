@@ -6,11 +6,6 @@ use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\SoftDeletes;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 
-/**
- * Model for product prices changes
- * 
- * @author Hosein Marzban
- */
 class ProductPriceHistory extends Model
 {
     

@@ -5,12 +5,6 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\SoftDeletes;
 
-
-/**
- * List of user marked products as favorite
- * 
- * @author Hosein Marzban
- */
 class UserFavorite extends Model
 {
     /**

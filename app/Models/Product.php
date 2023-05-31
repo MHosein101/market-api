@@ -6,11 +6,6 @@ use App\Models\ProductImage;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\SoftDeletes;
 
-/**
- * Model to work with products table
- * 
- * @author Hosein Marzban
- */
 class Product extends Model
 {
     /**
@@ -44,6 +39,7 @@ class Product extends Model
      */
     protected $appends = 
     [ 
+        'tags',
         'brand', 
         'categories', 
         'images', 
@@ -52,6 +48,16 @@ class Product extends Model
         'is_image_url', 
         'image_url' 
     ];
+
+    /**
+     * Return product tags
+     * 
+     * @return array
+     */
+    public function getTagsAttribute() 
+    {
+        return ProductTag::where('product_id', $this->id)->pluck('name');
+    }
 
     /**
      * Return product's brands data

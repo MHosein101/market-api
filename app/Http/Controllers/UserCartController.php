@@ -12,20 +12,16 @@ use App\Models\Invoice;
 use App\Models\InvoiceItem;
 use App\Models\InvoiceState;
 
-/**
- * User shopping cart management
- * 
- * @author Hosein marzban
- */ 
 class UserCartController extends Controller
 {
 
     /**
-     * Return user's cart summary group by stores
+     * Return user's cart data summary
+     * group by stores
      *
-     * @param Request $request
+     * @param \Illuminate\Http\Request
      * 
-     * @return Response
+     * @return \Illuminate\Http\JsonResponse
      */ 
     public function getStoresSummary(Request $request)
     {
@@ -37,10 +33,10 @@ class UserCartController extends Controller
     /**
      * Return cart items data in specific store
      *
-     * @param Request $request
+     * @param \Illuminate\Http\Request
      * @param int $storeId
      * 
-     * @return Response
+     * @return \Illuminate\Http\JsonResponse
      */ 
     public function getStoreItems(Request $request, $storeId)
     {
@@ -52,9 +48,9 @@ class UserCartController extends Controller
     /**
      * Return user's cart items data summary
      *
-     * @param Request $request
+     * @param \Illuminate\Http\Request
      * 
-     * @return Response
+     * @return \Illuminate\Http\JsonResponse
      */ 
     public function getCartSummary(Request $request)
     {
@@ -66,10 +62,10 @@ class UserCartController extends Controller
     /**
      * Add store product to the cart
      *
-     * @param Request $request
+     * @param \Illuminate\Http\Request
      * @param int $storeProductId
      * 
-     * @return Response
+     * @return \Illuminate\Http\JsonResponse
      */ 
     public function addProduct(Request $request, $storeProductId)
     {
@@ -94,13 +90,13 @@ class UserCartController extends Controller
     /**
      * Update cart item count
      *
-     * @param Request $request
+     * @param \Illuminate\Http\Request
      * @param int $storeId
      * @param int $productId
      * @param string $type
      * @param string|null $isFactor
      * 
-     * @return Response
+     * @return \Illuminate\Http\JsonResponse
      */ 
     public function updateItemCount(Request $request, $storeId, $productId, $type, $isFactor = null)
     {
@@ -148,10 +144,10 @@ class UserCartController extends Controller
     /**
      * Delete cart items of a store
      *
-     * @param Request $request
+     * @param \Illuminate\Http\Request
      * @param int $storeId
      * 
-     * @return Response
+     * @return \Illuminate\Http\JsonResponse
      */ 
     public function deleteStoreItems(Request $request, $storeId)
     {
@@ -167,16 +163,16 @@ class UserCartController extends Controller
     /**
      * Create new invoice from cart items 
      *
-     * @param Request $request
+     * @param \Illuminate\Http\Request
      * @param int $storeId
      * 
-     * @return Response
+     * @return \Illuminate\Http\JsonResponse
      */ 
     public function createInvoice(Request $request, $storeId)
     {
         $preInvoice = CartHelper::storeItems($storeId);
 
-        if( ! $preInvoice['cart']['cost']['payment_state'] )
+        if( ! $preInvoice['cart']['cost']['payment_state'] ) // invoice have error
         {
             $preInvoice['factor_state'] = false; // change to invoice_state
 
@@ -185,25 +181,21 @@ class UserCartController extends Controller
 
         if( count($preInvoice['cart']['items']) > 0 )
         {
-            $countProducts = UserCart::currentUser()
-            ->where('store_id', $storeId)
-            ->sum('count');
-
+            $countProducts = UserCart::currentUser()->where('store_id', $storeId)->sum('count');
             $trackingNumber = 0;
-
-            do 
-            {
-                $trackingNumber = random_int(10000, 99999);
-            } 
-            while ( Invoice::where('tracking_number', $trackingNumber)->first() );
-
             $billNumber = 0;
 
             do 
             {
-                $billNumber = random_int(1000000, 9999999);
+                $trackingNumber = random_int(100000000, 999999999);
             } 
-            while ( Invoice::where('bill_number', $billNumber)->first() );
+            while ( Invoice::where('tracking_number', $trackingNumber)->first() ); // make random unique tracking number
+
+            do 
+            {
+                $billNumber = random_int(100000000, 999999999);
+            } 
+            while ( Invoice::where('bill_number', $billNumber)->first() ); // make random unique bill number
 
             $v = Invoice::create(
             [
@@ -231,13 +223,10 @@ class UserCartController extends Controller
                     'base_product_id'  => $item->base_product_id ,
                 ]);
 
-                StoreProduct::where('id', $item->product_id)
-                ->decrement('warehouse_count', $item->count);
+                StoreProduct::where('id', $item->product_id)->decrement('warehouse_count', $item->count);
             }
 
-            UserCart::currentUser()
-            ->where('store_id', $storeId)
-            ->delete();
+            UserCart::currentUser()->where('store_id', $storeId)->delete();
         }
 
         return 
@@ -246,7 +235,7 @@ class UserCartController extends Controller
             [
                 'status'  => 201 ,
                 'message' => 'Invoice created.' ,
-                'factor_state' => true //  // change to invoice_state
+                'factor_state' => true // change to invoice_state
             ], 201);
     }
 

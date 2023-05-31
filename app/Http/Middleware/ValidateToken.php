@@ -18,14 +18,12 @@ class ValidateToken
     /**
      * Handle an incoming request.
      *
-     * @param  \Illuminate\Http\Request  $request
-     * @param  \Closure(\Illuminate\Http\Request): (\Illuminate\Http\Response|\Illuminate\Http\RedirectResponse)  $next
-     * @return \Illuminate\Http\Response|\Illuminate\Http\RedirectResponse
+     * @param \Illuminate\Http\Request  $request
+     * @param \Closure|\Illuminate\Http\Request $next
+     * @return \Illuminate\Http\JsonResponse|\Illuminate\Http\Request
      */
     public function handle(Request $request, Closure $next)
-    { 
-        DataHelper::logRequest($request);
-        
+    {
         $apiToken = $request->header('Authorization');
 
         $apiToken = str_replace('Bearer ', '', $apiToken);
@@ -36,7 +34,8 @@ class ValidateToken
         {
             return 
                 response()
-                ->json([ 
+                ->json(
+                [ 
                     'status'  => 403 ,
                     'message' => 'Token is invalid.' 
                 ], 403);
@@ -48,20 +47,26 @@ class ValidateToken
 
             return 
                 response()
-                ->json([ 
+                ->json(
+                [ 
                     'status'  => 403 ,
                     'message' => 'Token has expired.' 
                 ], 403);
         }
+        
+        $u = User::find($tokenRecord->user_id);
 
-        $user = User::where('id', $tokenRecord->user_id)
-        ->get(['id', 'account_type', 'store_id'])
-        ->first();
+        $user = (object) 
+        [
+            'id'           => $u->id ,
+            'account_type' => $u->account_type ,
+            'store_id'     => $u->store_id ,
+        ];
         
         $request->merge(compact('apiToken'));
         $request->merge(compact('user'));
 
-        if(!$request->isMethod('get'))
+        if(!$request->isMethod('get')) // for debug
         {
             DataHelper::logRequest($request);
         }

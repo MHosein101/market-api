@@ -18,15 +18,11 @@ class UserToken extends Model
     use SoftDeletes;
     
     /**
-     * The attributes that are mass assignable.
+     * The attributes that aren't mass assignable. 
+     * If leave empty, all attributes will be mass assignable.
      *
      * @var array
      */
-    protected $fillable = 
-    [
-        'token', 
-        'expire', 
-        'user_id'
-    ];
+    protected $guarded = [];
     
 }

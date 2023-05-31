@@ -8,8 +8,6 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 
 /**
  * Public view of store_products table data
- * 
- * @author Hosein Marzban
  */
 class PublicStoreProduct extends StoreProduct
 {
@@ -95,7 +93,7 @@ class PublicStoreProduct extends StoreProduct
     /**
      * Return count of user cart items
      * 
-     * @return boolean
+     * @return array
      */
     public function getCartAttribute() 
     {

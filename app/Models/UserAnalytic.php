@@ -6,11 +6,6 @@ use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\SoftDeletes;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 
-/**
- * List of user marked products as price analytics
- * 
- * @author Hosein Marzban
- */
 class UserAnalytic extends Model
 {
     /**

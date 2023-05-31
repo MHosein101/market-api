@@ -19,27 +19,31 @@ class AdminUserController extends Controller
 {
 
     /**
-     * Return all users with filter OR one user by id
+     * Return all users with filters
+     * if [id] query parameter is set, return a user by id
      * 
-     * @see SearchHelper::dataWithFilters(array, QueryBuilder, string|null, array, string|null) : Model[]
+     * @see SearchHelper::dataWithFilters()
      * 
-     * @param Request $request
+     * @param \Illuminate\Http\Request
      * 
-     * @return Response
+     * @return \Illuminate\Http\JsonResponse
      */ 
     public function getList(Request $request)
     {
-        if( $request->query('id') != null ) {
-
+        if( $request->query('id') != null ) 
+        {
             $user = User::withTrashed()->where('account_type', UserAccountType::Normal)->find( $request->query('id') );
-            $status = ( $user != null ) ? 200 : 404;
 
-            return response()
-            ->json([ 
-                'status' => $status ,
-                'message' => ($status == 200) ? 'OK' : 'No user found.' ,
-                'user' => $user
-            ], $status);
+            $status = $user != null ? 200 : 404;
+
+            return 
+                response()
+                ->json(
+                [ 
+                    'status'  => $status ,
+                    'message' => $status == 200 ? 'OK' : 'No user found.' ,
+                    'user'    => $user
+                ], $status);
         }
 
         $result = SearchHelper::dataWithFilters(
@@ -47,120 +51,147 @@ class AdminUserController extends Controller
             User::where('account_type', UserAccountType::Normal) , 
             null , 
             [ 
-                'full_name' => null ,
+                'full_name'     => null ,
                 'national_code' => null ,
-                'number' => null ,
+                'number'        => null ,
             ] , 
             'filterUsers'
         );
+
         extract($result);
 
-        $status = ( count($data) > 0 ) ? 200 : 204;
-        return response()
-        ->json([ 
-            'status' => $status ,
-            'message' => ($status == 200) ? 'OK' : 'No user found.' ,
-            'count' => $count ,
-            'pagination' => $pagination ,
-            'users' => $data
-        ], 200);
+        $status = count($data) > 0 ? 200 : 204;
+
+        return 
+            response()
+            ->json(
+            [ 
+                'status'     => $status ,
+                'message'    => $status == 200 ? 'OK' : 'No user found.' ,
+                'count'      => $count ,
+                'pagination' => $pagination ,
+                'users'      => $data
+            ], 200);
     }
 
     /**
      * Create new user or Update existing user by id
-     * if $signuUp equals true, then return results as array, NOT response
      * 
-     * @see DataHelper::validate(Response, array) : array
-     * @see DataHelper::dataImage(Request, boolean, string, Model, int, string, string) : void
+     * it also will be called from AuthController::signup()
+     * if $signuUp is true, then return array, else return JsonResponse
      * 
-     * @param Request $request
+     * @see DataHelper::validate()
+     * @see DataHelper::dataImage()
+     * 
+     * @param \Illuminate\Http\Request
      * @param int|null $userId
      * @param boolean $signUp
      * 
-     * @return Response
+     * @return \Illuminate\Http\JsonResponse|array
      */ 
     public function createOrUpdateUser(Request $request, $userId = null, $signUp = false)
     {
-        $isCreate = ($userId == null) ? true : false;
+        $isCreate = $userId == null;
         
         $uniqueIgnore = $isCreate ? '' : ",$userId,id";
 
         $v = DataHelper::validate( response() , $request->post() , 
         [
-            'full_name' => [ 'نام و نام خانوادگی', 'required|filled|max:50' ] ,
-            'national_code' => [ 'کد ملی', 'required|filled|numeric|digits:10|unique:users,national_code' . $uniqueIgnore ] ,
-            'phone_number_primary' => [ 'شماره موبایل اول', 'required|digits_between:10,11|starts_with:09,9|unique:users,phone_number_primary' . $uniqueIgnore ] ,
+            'full_name'              => [ 'نام و نام خانوادگی', 'required|filled|max:50' ] ,
+            'national_code'          => [ 'کد ملی', 'required|filled|numeric|digits:10|unique:users,national_code' . $uniqueIgnore ] ,
+            'phone_number_primary'   => [ 'شماره موبایل اول', 'required|digits_between:10,11|starts_with:09,9|unique:users,phone_number_primary' . $uniqueIgnore ] ,
             'phone_number_secondary' => [ 'شماره موبایل دوم', 'nullable|digits_between:10,11|starts_with:09,9' ] ,
-            'house_number' => [ 'تلفن ثابت', 'nullable|digits_between:10,13' ] ,
+            'house_number'           => [ 'تلفن ثابت', 'nullable|digits_between:10,13' ] ,
 
             'password' => [ 'رمز عبور', 'nullable|min:6' ] ,
-            // 'password_repeat' => [ 'تکرار رمز عبور', 'nullable|min:6|required_with:password|same:password' ] ,
             
             'address_province' => [ 'استان', 'nullable|filled|max:50' ] ,
-            'address_city' => [ 'شهر', 'nullable|filled|max:50' ] ,
-            'address_detail' => [ 'آدرس', 'required|filled|max:250' ] ,
+            'address_city'     => [ 'شهر', 'nullable|filled|max:50' ] ,
+            'address_detail'   => [ 'آدرس', 'required|filled|max:250' ] ,
             'address_postcode' => [ 'کد پستی', 'nullable|numeric' ] ,
         ]);
-        if( $v['code'] == 400 ) {
+
+        if( $v['code'] == 400 ) 
+        {
             if($signUp)
-                return [
-                    'ok' => false ,
+            {
+                return 
+                [
+                    'ok'     => false ,
                     'errors' => $v['response']
                 ];
+            }
             else 
+            {
                 return $v['response'];
+            }
         }
 
         $v = DataHelper::validate( response() , $request->file() , 
         [
             'profile_image' => [ 'عکس پروفایل', 'file|image|between:4,1024' ] ,
         ]);
-        if( $v['code'] == 400 ) {
+
+        if( $v['code'] == 400 ) 
+        {
             if($signUp)
-                return [
-                    'ok' => false ,
+            {
+                return 
+                [
+                    'ok'     => false ,
                     'errors' => $v['response']
                 ];
+            }
             else 
+            {
                 return $v['response'];
+            }
         }
 
         $userData = [
-            'full_name' => $request->post('full_name') ,
-            'national_code' => $request->post('national_code') ,
-            'phone_number_primary' => $request->post('phone_number_primary') ,
+            'full_name'              => $request->post('full_name') ,
+            'national_code'          => $request->post('national_code') ,
+            'phone_number_primary'   => $request->post('phone_number_primary') ,
             'phone_number_secondary' => DataHelper::post('phone_number_secondary', '') ,
-            'house_number' => DataHelper::post('house_number', '') ,
+            'house_number'           => DataHelper::post('house_number', '') ,
         ];
-            
-        // if($isCreate)
-        //     $userData['password'] = Hash::make($request->post('phone_number_primary'));
+           
+        /* this condition is a better way instead of below condition
+
+        if($isCreate)
+        {
+            $userData['password'] = Hash::make($request->post('phone_number_primary'));
+        } */
 
         if (!$isCreate && $request->post('password') != null)
+        {
             $userData['password'] = Hash::make($request->post('password'));
+        }
 
-        $userAddress = [
-            'province' => DataHelper::post('address_province', '') ,
-            'city' => DataHelper::post('address_city', '') ,
-            'detail' => DataHelper::post('address_detail', '') ,
+        $userAddress = 
+        [
+            'province'  => DataHelper::post('address_province', '') ,
+            'city'      => DataHelper::post('address_city', '') ,
+            'detail'    => DataHelper::post('address_detail', '') ,
             'post_code' => DataHelper::post('address_postcode', '') ,
         ];
 
         $user = null;
 
-        if($isCreate) {
+        if($isCreate) 
+        {
             $userData['account_type'] = UserAccountType::Normal;
-            $user = User::create($userData);
 
+            $user = User::create($userData);
             $userId = $user->id;
             
             $userAddress['user_id'] = $userId;
+
             UserAddress::create($userAddress);
         }
-        else {
-            User::withTrashed()
-            ->where('id', $userId)
-            ->update($userData);
+        else 
+        {
+            User::withTrashed()->where('id', $userId)->update($userData);
             
             UserAddress::where('user_id', $userId)->update($userAddress);
             
@@ -169,53 +200,58 @@ class AdminUserController extends Controller
 
         DataHelper::dataImage($request, $isCreate, 'users', User::class, $userId, 'profile_image', 'profile_image');
 
-        if($signUp) {
-            return [
-                'ok' => true ,
+        if($signUp) 
+        {
+            return 
+            [
+                'ok'   => true ,
                 'user' => $user
             ];
         }
-        else {
+        else 
+        {
             $status = $isCreate ? 201 : 200;
-            return response()
-            ->json([ 
-                'status' => $status ,
-                'message' =>  $isCreate ? 'User created.' : 'User data updated.' ,
-                'user' => $user
-            ], $status);
+
+            return 
+                response()
+                ->json(
+                [ 
+                    'status'  => $status ,
+                    'message' =>  $isCreate ? 'User created.' : 'User data updated.' ,
+                    'user'    => $user
+                ], $status);
         }
     }
 
     /**
      * Soft delete or Restore user
      * 
-     * @param Request $request
+     * @param \Illuminate\Http\Request
      * @param int $userId
      * 
-     * @return Response
+     * @return \Illuminate\Http\JsonResponse
      */ 
     public function changeUserState(Request $request, $userId)
     {
-        $check = User::withTrashed()->find($userId);
-        $msg = '';
-
-        if($check->deleted_at == null) {
-            User::where('id', $userId)->delete();
-            $msg = 'User soft deleted.';
-        }
-        else {
-            User::withTrashed()->where('id', $userId)->restore();
-            $msg = 'User record restored.';
-        }
-
         $user = User::withTrashed()->find($userId);
 
-        return response()
-        ->json([ 
-            'status' => 200 ,
-            'message' => $msg ,
-            'user' => $user
-        ], 200);
+        if($user->deleted_at == null) 
+        {
+            $user->delete();
+        }
+        else 
+        {
+            $user->restore();
+        }
+
+        return 
+            response()
+            ->json(
+            [ 
+                'status'  => 200 ,
+                'message' => 'OK' ,
+                'user'    => $user
+            ], 200);
     }
 
 }

@@ -8,8 +8,6 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 
 /**
  * Public view of user marked products list as price analytic
- * 
- * @author Hosein Marzban
  */
 class UserMarkedProductAnalytic extends SearchProduct
 {

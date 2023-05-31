@@ -4,8 +4,6 @@ namespace App\Http\Helpers;
 
 /**
  * Helper methods to make seeder data for database
- * 
- * @author Hosein marzban
  */ 
 class SeederHelper
 {

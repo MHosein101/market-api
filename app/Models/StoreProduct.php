@@ -5,11 +5,6 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\SoftDeletes;
 
-/**
- * Model to work with store_products table
- * 
- * @author Hosein Marzban
- */
 class StoreProduct extends Model
 {
     /**

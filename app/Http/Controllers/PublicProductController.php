@@ -13,25 +13,21 @@ use App\Http\Helpers\PublicSearchHelper;
 use App\Http\Helpers\SearchHelper;
 use App\Models\SearchProduct;
 
-/**
- * Public view of single product's information
- * 
- * @author Hosein marzban
- */ 
 class PublicProductController extends Controller
 {
     /**
      * Return detail for single product page
      * 
-     * @param Request $request
+     * @param \Illuminate\Http\Request
      * 
-     * @return Response
+     * @return \Illuminate\Http\JsonResponse
      */ 
     public function detail(Request $request)
     {
         $product = $request->product;
 
-        $priceRange = StoreProduct::selectRaw('MIN(store_price) as range_min, MAX(store_price) as range_max')
+        $priceRange = StoreProduct
+        ::selectRaw('MIN(store_price) as range_min, MAX(store_price) as range_max')
         ->where('product_id', $product->id)
         ->where('warehouse_count', '>', 0)
         ->first();
@@ -39,111 +35,143 @@ class PublicProductController extends Controller
         $brand = Brand::find($product->brand_id);
         
         $categoryId = ProductCategory::where('product_id', $product->id)->first()->category_id;
+
         $categoriesBreadCrump = PublicSearchHelper::categoryBreadCrump( Category::find($categoryId) );
 
         $breadCrumpPath = $categoriesBreadCrump;
-        $breadCrumpPath[] = [ 
-            'type' => 'brand' , 
+
+        $breadCrumpPath[] = 
+        [ 
+            'type'  => 'brand' , 
             'title' => "{$brand->name} ({$brand->english_name})" , 
             'brand' => $brand->name , 
-            'slug' => $brand->slug ,
+            'slug'  => $brand->slug ,
         ];
 
         $sales = PublicSearchHelper::productSales($product->id);
         
-        return response()
-        ->json([
-            'status' => 200 ,
-            'message' => 'OK' ,
-            'data' => [
-                'prices_range' => [
-                    'min' => $priceRange->range_min ?? 0 , 
-                    'max' => $priceRange->range_max ?? 0
-                ] ,
-                'path' => $breadCrumpPath ,
-                'product' => $product ,
-                'brand' => $brand ,
-                'categories' => $categoriesBreadCrump ,
-                'stores' => $sales ,
-            ]
-        ], 200);
+        return 
+            response()
+            ->json(
+            [
+                'status'  => 200 ,
+                'message' => 'OK' ,
+                'data' => 
+                [
+                    'prices_range' => 
+                    [
+                        'min' => $priceRange->range_min ?? 0 , 
+                        'max' => $priceRange->range_max ?? 0
+                    ] ,
+                    'path'       => $breadCrumpPath ,
+                    'product'    => $product ,
+                    'brand'      => $brand ,
+                    'categories' => $categoriesBreadCrump ,
+                    'stores'     => $sales ,
+                ]
+            ], 200);
     }
 
     
     /**
      * Return product sales with filters
      * 
-     * @param Request $request
+     * @param \Illuminate\Http\Request
      * 
-     * @return Response
+     * @return \Illuminate\Http\JsonResponse
      */ 
     public function sales(Request $request)
     {
         $product = $request->product;
-        $filters = SearchHelper::configQueryParams($request->query(), [
+
+        $filters = SearchHelper::configQueryParams($request->query(), 
+        [
             'provinces' => null ,
-            'cities' => null ,
+            'cities'    => null ,
         ]);
 
-        foreach(['provinces', 'cities'] as $k) {
+        foreach(['provinces', 'cities'] as $k)
+        {
             if($filters[$k] != null)
+            {
                 $filters[$k] = explode('|', $filters[$k]);
+            }
         }
 
-        /* if( $filters['provinces'] == null && $filters['cities'] == null ) 
-            return response()->json([
-                'status' => 400 ,
-                'message' => 'Define at least one of these parameters : provinces , cities'
-            ], 400); */
+        /* 
+        if( $filters['provinces'] == null && $filters['cities'] == null ) 
+        {
+            return 
+                response()
+                ->json(
+                [
+                    'status'  => 400 ,
+                    'message' => 'Define at least one of these parameters : provinces , cities'
+                ], 400); 
+        }
+        */
 
         $filters['ignores'] = null;
+
         $filteredSales = PublicSearchHelper::productSales($product->id, $filters);
         
         $ignoreIDs = [];
-        foreach($filteredSales as $f)
-            $ignoreIDs[] = $f->store_id;
 
-        $otherSales = PublicSearchHelper::productSales($product->id, [
-            'ignores' => $ignoreIDs ,
-            'provinces' => null , 'cities' => null ,
+        foreach($filteredSales as $f)
+        {
+            $ignoreIDs[] = $f->store_id;
+        }
+
+        // results that not include in filtered list
+        $otherSales = PublicSearchHelper::productSales($product->id, 
+        [
+            'ignores'   => $ignoreIDs ,
+            'provinces' => null , 
+            'cities'    => null ,
         ]);
 
-        return response()
-        ->json([
-            'status' => 200 ,
-            'message' => 'Ok' ,
-            'counts' => [
-                'filtered' => count($filteredSales) , 
-                'others' => count($otherSales)
-            ] ,
-            'data' => [
-                'filtered' => $filteredSales ,
-                'others' => $otherSales
-            ]
-        ], 200);
+        return 
+            response()
+            ->json(
+            [
+                'status'  => 200 ,
+                'message' => 'Ok' ,
+                'counts' => 
+                [
+                    'filtered' => count($filteredSales) , 
+                    'others'   => count($otherSales)
+                ] ,
+                'data' => 
+                [
+                    'filtered' => $filteredSales ,
+                    'others'   => $otherSales
+                ]
+            ], 200);
 
     }
 
     /**
-     * Return similar products
+     * Return other products that are in same category as current products
      * 
-     * @param Request $request
+     * @param \Illuminate\Http\Request
      * 
-     * @return Response
+     * @return \Illuminate\Http\JsonResponse
      */ 
     public function similars(Request $request)
     {
         $product = $request->product;
 
-        $productStores = StoreProduct::
-        selectRaw('product_id, MIN(store_price) as product_price, SUM(warehouse_count) as product_available_count')
+        $productStores = StoreProduct
+        ::selectRaw('product_id, MIN(store_price) as product_price, SUM(warehouse_count) as product_available_count')
         ->groupBy('product_id');
         
-        $products = SearchProduct::leftJoinSub($productStores, 'product_stores', function ($join) {
+        $products = SearchProduct::leftJoinSub($productStores, 'product_stores', function ($join) 
+        {
             $join->on('products.id', 'product_stores.product_id');
         })
-        ->where('products.id', '!=', $product->id);
+        ->where('products.id', '!=', $product->id); // ignore current product
         
+        // finding current product category
         $c = ProductCategory::where('product_id', $product->id)->first()->category_id;
         $c = Category::find($c)->slug;
 
@@ -154,25 +182,32 @@ class PublicProductController extends Controller
             [ 
                 'category' => $c ,
 
-                'q' => null ,
+                'q'     => null ,
                 'brand' => null ,
-                'fromPrice' => null , 'toPrice' => null , 'perPage' => null ,
-                'price_from' => null , 'price_to' => null ,
-                'available' => null ,
-                'order' => null , 'sort' => 'time_desc' ,
+                'fromPrice'  => null , 
+                'toPrice'    => null , 
+                'perPage'    => null ,
+                'price_from' => null , 
+                'price_to'   => null ,
+                'available'  => null ,
+                'order' => null , 
+                'sort'  => 'time_desc' ,
                 'state' => 'active'
             ] , 
             'filterSearchProducts'
         );
+
         extract($result);
 
-        return response()
-        ->json([
-            'status' => 200 ,
-            'message' => 'OK' ,
-            'count' => $count['total'] ,
-            'data' => $data
-        ], 200);
+        return 
+            response()
+            ->json(
+            [
+                'status'  => 200 ,
+                'message' => 'OK' ,
+                'count'   => $count['total'] ,
+                'data'    => $data
+            ], 200);
     }
 
 

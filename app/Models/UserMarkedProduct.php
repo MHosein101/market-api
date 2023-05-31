@@ -8,8 +8,6 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 
 /**
  * Public view of user marked products list
- * 
- * @author Hosein Marzban
  */
 class UserMarkedProduct extends SearchProduct
 {

@@ -2,16 +2,14 @@
 
 namespace App\Http\Controllers;
 
-use App\Http\Helpers\CartHelper;
 use App\Models\User;
+use App\Models\Store;
 use Illuminate\Http\Request;
 use App\Models\UserAccountType;
+use App\Http\Helpers\CartHelper;
 use App\Http\Helpers\DataHelper;
-use App\Models\Store;
 use Illuminate\Support\Facades\DB;
-use Illuminate\Support\Facades\File;
 use Illuminate\Support\Facades\Hash;
-use Illuminate\Support\Facades\Storage;
 
 /**
  * Control requests for signup and login
@@ -23,16 +21,16 @@ class AuthController extends Controller
     
     /**
      * Sign up a new user
-     * if type equals 'user' it will create a normal user
-     * if type equals 'store' it will create a store user
+     * if type is [user] it will create a normal user
+     * if type is [store] it will create a store user
      * 
-     * @see AdminUserController::createOrUpdateUser(Request, int|null, boolean) : array
-     * @see AdminStoreController::createOrUpdateStore(Request, int|null, boolean) : array
-     * @see User->generateApiToken() : string
+     * @see AdminUserController::createOrUpdateUser()
+     * @see AdminStoreController::createOrUpdateStore()
+     * @see User->generateApiToken()
      *
-     * @param  Request $request
+     * @param \Illuminate\Http\Request
      * 
-     * @return Response
+     * @return \Illuminate\Http\JsonResponse
      */ 
     public function signup(Request $request, $type)
     {
@@ -79,14 +77,14 @@ class AuthController extends Controller
     }
 
     /**
-     * Admin and Store users login with username and password
+     * All users can login with username and password
      * 
-     * @see DataHelper::validate(Response, array) : array
+     * @see DataHelper::validate()
      * @see User->generateApiToken() : string
      * 
-     * @param Request $request
+     * @param \Illuminate\Http\Request
      * 
-     * @return Response
+     * @return \Illuminate\Http\JsonResponse
      */ 
     public function loginCredentials(Request $request)
     {
@@ -110,7 +108,8 @@ class AuthController extends Controller
                 ->json(
                 [ 
                     'status'  => 401 ,
-                    'message' => 'کاربری یافت نشد'
+                    'message' => 'Login failed' ,
+                    'errors' => [ 'نام کاربری یا رمز عبور اشتباه است' ]
                 ], 401); 
         }
 
@@ -120,12 +119,12 @@ class AuthController extends Controller
         {
             $checkPassword = Hash::check($request->input('password') , $user->password);
         }
-        else
+        else // this else part should be deleted
         {
             $checkPassword = $request->input('password') == $user->phone_number_primary;
         }
 
-        // if(Hash::check($request->input('password') , $user->password)) {
+        // if(Hash::check($request->input('password') , $user->password)) { // this condition is better
         if(!$checkPassword) 
         {
             return 
@@ -133,7 +132,8 @@ class AuthController extends Controller
                 ->json(
                 [ 
                     'status'  => 401 ,
-                    'message' => 'اطلاعات وارد شده نادرست است' // 'رمز عبور اشتباه است'
+                    'message' => 'Login failed' ,
+                    'errors' => [ 'نام کاربری یا رمز عبور اشتباه است' ]
                 ], 401); 
         }
 
@@ -162,9 +162,9 @@ class AuthController extends Controller
     /**
      * Return all users mobile numbers
      *
-     * @param  Request $request
+     * @param \Illuminate\Http\Request
      * 
-     * @return Response
+     * @return \Illuminate\Http\JsonResponse
      */ 
     public function getNumbers(Request $request)
     {
@@ -188,6 +188,7 @@ class AuthController extends Controller
 
         $numbers = [];
 
+        // remove empty members that created because of users  that did not set their numbers
         foreach($allNumbers as $n)
         {
             if($n != '')
@@ -195,25 +196,6 @@ class AuthController extends Controller
                 $numbers[] = $n;
             }
         }
-
-        // $numbers = User::pluck('phone_number_primary')
-
-        // ->merge( User::pluck('phone_number_secondary') )
-
-        // ->merge( User::pluck('house_number') )
-
-        // ->merge( Store::pluck('warehouse_number') )
-
-        // ->merge( Store::pluck('office_number') )
-
-        // ->filter(function ($value, $key) 
-        // {
-        //     return $value != '';
-        // })
-
-        // ->values()
-
-        // ->all();
 
         return 
             response()
@@ -228,36 +210,36 @@ class AuthController extends Controller
     /**
      * Debug helper for developer
      * 
-     * @see DataHelper::readLog(string) : mixed
+     * @see DataHelper::readLog()
      *
-     * @param  Request $request
+     * @param \Illuminate\Http\Request
      * 
-     * @return Response
+     * @return void
      */ 
     public function debug(Request $request)
     {
-        if( $request->query('db') != null ) 
+        if( $request->query('db') != null ) // directly execute sql statements from url
         {
             $r = DB::select($request->query('db'));
 
             dd($r);
         }
-        else if( $request->query('log') != null ) 
+        else if( $request->query('log') != null )
         {
             dd( DataHelper::readLog($request->query('log')) );
         }
     }
 
     /**
-     * If normal user exists, give it a verification code
-     * If normal user not exists, create new user then give it a verification code
+     * If user exists, give it a verification code
+     * If user not exists, create new normal user then give it a verification code
      * 
-     * @see DataHelper::validate(Response, array) : array
-     * @see User->generateVerificationCode() : string
+     * @see DataHelper::validate()
+     * @see User->generateVerificationCode()
      *
-     * @param  Request $request
+     * @param \Illuminate\Http\Request
      * 
-     * @return Response
+     * @return \Illuminate\Http\JsonResponse
      */ 
     public function loginByCode(Request $request)
     {
@@ -279,14 +261,14 @@ class AuthController extends Controller
         $isSignUp = false;
         $code = 200;
 
-        if( $user != null && $user->account_type != UserAccountType::Normal )
+        if($user != null)
         {
             return 
                 response()
                 ->json(
                 [ 
                     'status' => 401 ,
-                    'message' => 'کاربری یافت نشد'
+                    'message' => 'کاربری یافت نشد' ,
                 ], 401);
         }
 
@@ -315,22 +297,22 @@ class AuthController extends Controller
                 'status'            => $code ,
                 'message'           => $message ,
                 'is_signup'         => $isSignUp ,
-                'verification_code' => $verificationCode , // FOR DEBUG
+                'verification_code' => $verificationCode , // for debug
             ], $code);
 
-        // * SHOULD SEND VERIFICATION CODE HERE BUT WE SKIP IT FOR DEBUG *
+        // SHOULD SEND VERIFICATION CODE HERE BUT WE SKIP IT
     }
 
     /**
-     * Verify normal user with it's verification code
+     * Verify users with verification code
      * If verification code is correct then give it an api token
      * 
-     * @see DataHelper::validate(Response, array) : array
-     * @see User->generateApiToken() : string
+     * @see DataHelper::validate()
+     * @see User->generateApiToken()
      *
-     * @param Request $request
+     * @param \Illuminate\Http\Request
      * 
-     * @return Response
+     * @return \Illuminate\Http\JsonResponse
      */ 
     public function codeVerification(Request $request)
     {
@@ -349,7 +331,7 @@ class AuthController extends Controller
 
         $user = User::where('phone_number_primary', $phoneNumber)->first();
         
-        if( $user == null || $user->account_type != UserAccountType::Normal ) 
+        if($user == null) 
         {
             return 
                 response()
@@ -360,7 +342,7 @@ class AuthController extends Controller
                 ], 401);
         }
 
-        if( $user->verification_code != $request->input('verification_code') )
+        if($user->verification_code != $request->input('verification_code'))
         {
             return 
                 response()

@@ -24,10 +24,12 @@ class ValidateUrlQueryString
     {
         $v = DataHelper::validate( response() , $request->query() , 
         [
-            'state' => [ 'state', 'nullable|in:all,active,trashed,pending,accepted,rejected,sending,finished,canceled' ] ,
+            'state' => [ 'state', 'nullable|in:all,active,trashed,pending,accepted,rejected,sending,finished,canceled,true,false' ] ,
             'page'  => [ 'page', 'nullable|numeric|between:1,9999' ] ,
             'limit' => [ 'limit', 'nullable|numeric|between:1,50' ] ,
             'order' => [ 'order', 'nullable|in:asc,desc' ] ,
+            
+            'priority' => [ 'priority', 'nullable|in:asc,desc' ] ,
 
             'perPage' => [ 'perPage', 'nullable|numeric|between:1,50' ] ,
 

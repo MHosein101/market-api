@@ -27,6 +27,7 @@ class UserSeeder extends Seeder
             'account_type' => UserAccountType::Admin ,
             'phone_number_primary' => '09302520508' ,
             'national_code' => '2092092090' ,
+            'password' => 'Ali499021' ,
             'full_name' => 'Admin Ali HassanZadeh'
         ]);
         

@@ -5,8 +5,6 @@ namespace App\Models;
 
 /**
  * Constant values for store's product price history type
- * 
- * @author Hosein marzban
  */
 class ProductPriceHistoryType 
 {

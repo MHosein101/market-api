@@ -6,11 +6,6 @@ use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\SoftDeletes;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 
-/**
- * Model for discount items of each store product
- * 
- * @author Hosein Marzban
- */
 class StoreProductDiscount extends Model
 {
     /**

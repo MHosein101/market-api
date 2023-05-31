@@ -9,9 +9,7 @@ use App\Models\StoreProduct;
 use App\Models\StoreProductDiscount;
 
 /**
- * Helper methods for cart data 
- * 
- * @author Hosein marzban
+ * Helper methods for cart data
  */ 
 class CartHelper
 {
@@ -163,7 +161,9 @@ class CartHelper
 
         $costs['discount_percent'] = round($costs['discount_percent'], 1);
 
-        $cartsumm = CartHelper::cartSummary();
+        $storeCount = UserCart::currentUser()->where('store_id', $storeId)->sum('count');
+
+        $cartCount = UserCart::currentUser()->sum('count');
 
         return 
         [
@@ -178,12 +178,11 @@ class CartHelper
             ] ,
             'cart' => 
             [
-                'count' => $cartsumm['cart_count'] ,
                 'cost'  => $costs ,
                 'items' => $cart ,
             ] ,
-            'cart_count' => $cartsumm['cart_count'] ,
-            'cart_items' => $cartsumm['cart']
+            'cart_count' => (int)$cartCount ,
+            'store_count' => (int)$storeCount ,
         ];
 
     }
@@ -266,7 +265,7 @@ class CartHelper
     }
 
     /**
-     * Check if current discount of cart product changed or not
+     * Check if current discount of cart product changed
      * 
      * @param int $storeProductId
      * @param string $currentDiscount
