@@ -1,7 +1,7 @@
 # Marketing website API Using Laravel
 
 [Visit](https://torob.iran.liara.run/) and explore <br/>
-(Sometimes it may be off) <br/>
+(It may be off due to deployment cost) <br/>
 
 Front-End was implemented by [Ali-HSNZ](https://github.com/Ali-HSNZ/Torob) <br/>
 
